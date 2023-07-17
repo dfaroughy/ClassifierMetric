@@ -224,7 +224,7 @@ class _ParticleEdgeBlock(nn.Module):
         return features
 
     def forward(self, points, features):
-        idx = self.knn(points)
+        indx = self.knn(points)
         graph = self.get_graph_feature(features, indx)
 
         for conv, batch_norm, activation in zip(self.convs, self.bns, self.acts):

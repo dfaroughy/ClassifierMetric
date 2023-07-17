@@ -222,7 +222,7 @@ class JetNetFeatures:
             x = x[mask].flatten() if masked else x.flatten() 
         else:
             x = self.nth_particle(n=nth_particle, feature=feature)
-        fig, ax = plt.subplots(1, figsize=figsize) if ax is None else (_, ax)
+        fig, ax = plt.subplots(1, figsize=figsize) if ax is None else (None, ax)
         lw, alpha = (0.5, 0.2) if fill else (0.75, 1.0)
         sns.histplot(x=x, color=color, bins=bins, element="step", log_scale=(xlog, ylog), lw=lw, fill=fill, alpha=alpha, ax=ax) 
         plt.xlabel(r'{}'.format(feature))
@@ -239,7 +239,7 @@ class JetNetFeatures:
         
         idx = {'pt_rel':0, 'eta_rel':1, 'phi_rel':2, 'm_rel':3, 'e_rel':4, 'multiplicity':5}
         x = self.jets[..., idx[feature]]
-        fig, ax = plt.subplots(1, figsize=figsize) if ax is None else (_, ax)
+        fig, ax = plt.subplots(1, figsize=figsize) if ax is None else (None, ax)
         lw, alpha = (0.5, 0.2) if fill else (0.75, 1.0)
         sns.histplot(x=x, color=color, bins=bins, element="step", log_scale=(xlog, ylog), lw=lw, fill=fill, alpha=alpha, ax=ax) 
         plt.xlabel(r'{}'.format(feature))
