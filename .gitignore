@@ -6,7 +6,7 @@ data/t150.hdf5
 data/generated_data_FM.npy
 __pycache__/*
 test.py
-ModelConfig.py
+ModelCard.py
 ConfigCard.py
 test/config.json
 src/__pycache__/*
