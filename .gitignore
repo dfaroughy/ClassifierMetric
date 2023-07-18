@@ -1,0 +1,14 @@
+tops.DeepSets.128.hdims.3x3.layers.5000.batch__1/config.json
+tops.DeepSets.128.hdims.3x3.layers.5000.batch__2/config.json
+tops.DeepSets.128.hdims.3x3.layers.5000.batch__3/config.json
+.DS_Store
+.vscode/*
+data/ddim_200.h5
+data/t150.hdf5
+data/generated_data_FM.npy
+__pycache__/*
+test.py
+test/config.json
+src/__pycache__/*
+ModelConfig.py
+ConfigCard.py
