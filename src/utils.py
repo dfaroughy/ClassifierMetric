@@ -4,8 +4,6 @@ import os.path
 import shutil
 import itertools
 import json
-import inspect
-import argparse
 
 def make_dir(path, overwrite=False, sub_dirs=False, verbose=True):  
     Directory = path
@@ -29,7 +27,7 @@ def make_dir(path, overwrite=False, sub_dirs=False, verbose=True):
         print("#================================================")
     return Directory
 
-def save_configs(configs, filename):
+def save_configs(configs, filename, verbose=True):
     class_attributes = {}
     for cls in configs:
         attributes = {}
@@ -39,12 +37,16 @@ def save_configs(configs, filename):
         class_attributes[cls.__name__] = attributes
     with open(filename, 'w') as f:
         json.dump(class_attributes, f, indent=4)
+    if verbose:
+        print("INFO: saved model configs to {}".format(filename))
 
-def save_data(samples: dict, name: str, workdir : str):
-        for key in samples.keys():
-                sample = samples[key].numpy()
-                path = '{}/results/{}_{}.npy'.format(workdir, name, key) 
-                np.save(path, sample)
+def save_data(samples: dict, name: str, workdir : str, verbose: bool = True):
+    for key in samples.keys():
+        sample = samples[key].numpy()
+        path = '{}/results/{}_{}.npy'.format(workdir, name, key) 
+        np.save(path, sample)
+    if verbose:
+        print("INFO: saved {} data in {}".format(name, workdir))
 
 def savefig(filename, extension="png"):
     counter = 1
@@ -77,7 +79,6 @@ def savetensor(tensor, filename, save_dir, extension="npy", use_seed=None, verbo
         np.save(save_dir + file, tensor.cpu().detach().numpy())
     if verbose:
         print("INFO: saving {} to file -> {}".format(tensor.shape, file))
-
 
 def get_gpu_memory():
     torch.cuda.empty_cache()
