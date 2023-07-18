@@ -9,9 +9,10 @@ class DataConfig:
                    }
 
     preprocess: dict = {
-                        'normalize': {},
-                        'logit_transform': {'alpha' : 1e-5},
-                        'standardize': {'sigma' : 1.0}
+                        'log_pt': {},
+                        # 'normalize': {},
+                        # 'logit_transform': {'alpha' : 1e-5},
+                        # 'standardize': {'sigma' : 1.0}
                         }
   
 class TrainConfig:
