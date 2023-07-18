@@ -20,7 +20,7 @@ class TrainConfig:
     size : int = 150000
     test_size : float = 0.7    
     batch_size : int = 1024
-    epochs : int = 3   
+    epochs : int = 10000   
     early_stopping : int = 30     
     lr : float = 0.0005
 
