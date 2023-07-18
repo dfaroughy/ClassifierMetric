@@ -172,13 +172,14 @@ class JetNetFeatures:
             print('INFO: un-normalizing data')
 
     def logit_transform(self, alpha: float=1e-6, inverse: bool=False):
-        mask = self.particles[..., -1, None]
+        mask = self.particles[..., -1].bool()
         if not inverse:
-            self.particles[..., :4] = logit(self.features, mask, alpha=alpha)
+            self.particles[..., :5][mask] = logit(self.particles[..., :5][mask], alpha=alpha)
             print('INFO: applying logit transform alpha={}'.format(alpha))
         else:
-            self.particles[..., :4] = expit(self.features, mask, alpha=alpha)
-            print('INFO: applying expit transform alpha={}'.format(alpha))
+            pass
+            # self.particles[..., :5] = expit(self.particles[..., :5][mask], alpha=alpha)
+            # print('INFO: applying expit transform alpha={}'.format(alpha))
 
     def preprocess(self, methods: dict={}):
         method_items = list(methods.items())  
@@ -269,11 +270,11 @@ class JetNetFeatures:
         plt.ylabel(r'$\Delta\phi$')
         plt.show()
    
-def logit(t, mask, alpha=1e-6) -> torch.Tensor:
-    x = mask * alpha + (1 - 2 * alpha) * t
+def logit(t, alpha=1e-6) -> torch.Tensor:
+    x = alpha + (1 - 2 * alpha) * t
     return torch.log(x/(1-x))
 
-def expit(t, mask, alpha=1e-6) -> torch.Tensor:
-    exp = torch.exp(t)
-    x = exp / (1 + exp) 
-    return (x - mask * alpha) / (1 - 2*alpha)
+# def expit(t,  alpha=1e-6) -> torch.Tensor:
+#     exp = torch.exp(t)
+#     x = exp / (1 + exp) 
+#     return (x - mask * alpha) / (1 - 2*alpha)

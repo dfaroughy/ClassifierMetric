@@ -28,7 +28,6 @@ from ConfigCard import EvalConfig as Eval
 #...Load model config card
 
 from ModelCard import DeepSetsConfig as Config
-
 model = DeepSets(config=Config)
 
 #...Create working folders

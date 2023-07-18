@@ -16,10 +16,10 @@ class MLPConfig(BaseConfig):
 class DeepSetsConfig(BaseConfig):
 
     name  = 'DeepSets'
-    dim_input : int = 4
+    dim_input : int = 5
     dim_output : int = 2
     dim_hidden : int = 128   
-    num_layers_1 : int = 3 
+    num_layers_1 : int = 3
     num_layers_2 : int = 3 
 
 class ParticleNetConfig(BaseConfig):
@@ -28,9 +28,10 @@ class ParticleNetConfig(BaseConfig):
     dim_input : int = 2
     dim_output : int = 2
     dim_hidden : int = 128 
-    num_knn : int = 16     
-    dim_conv_1 : int = 64
+    num_knn : int = 7     
+    dim_conv_1 : int = 32
     dim_conv_2 : int = 64
     num_layers_1 : int = 3
     num_layers_2 : int = 3
+    pooling : str = 'average'
     dropout : float = 0.1
