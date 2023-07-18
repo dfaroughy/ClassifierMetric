@@ -105,9 +105,10 @@ plot_class_score(test=Data.probs['jetnet'],
                 bins=50,
                 legends=['flow-matching', 'diffusion'])
 
-# a method for saving the Data.probs dictionary to a file
-def save_probs(Data, filename=Config.workdir+'/probs.json'):
-        with open(filename, 'w') as f:
-                json.dump(Data, f)
+# a method for saving the Data.probs into numpy files
+def save_probs(Data, filename=Config.workdir+'/probs.npy'):
+        np.save(filename, Data)
 
-save_probs(Data.probs)
+save_probs(Data.probs['jetnet'].numpy(), filename=Config.workdir+'/jetnet_probs.npy')
+save_probs(Data.probs['flow-match'].numpy(), filename=Config.workdir+'/flow-match_probs.npy')
+save_probs(Data.probs['diffusion'].numpy(), filename=Config.workdir+'/diffusion_probs.npy')
