@@ -12,7 +12,7 @@ class DataConfig:
                         # 'log_pt': {},
                         'normalize': {},
                         'logit_transform': {'alpha' : 1e-5},
-                        'standardize': {'sigma' : 5.0}
+                        'standardize': {'sigma' : 1.0}
                         }
   
 class TrainConfig:
