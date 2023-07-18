@@ -2,14 +2,11 @@ import torch
 import torch.nn as nn
 import numpy as np
 import h5py
-import json
 import sys
-
-from src.utils import make_dir, save_configs
+from src.utils import make_dir, save_configs, save_data
 from src.plots import plot_class_score
 from src.jetnet import JetNetFeatures
 from src.train import MultiClassifierTest
-from src.architectures import DeepSets
 
 sys.path.append("../")
 
@@ -20,16 +17,18 @@ The two models are:
 The classifier is trained on the two models and evaluated on a reference dataset (JetNet).
 '''
 
-#...Load config cards
+#...Load model and config cards
 
+from src.architectures import DeepSets as model
+
+from ModelCard import DeepSetsConfig as Config
 from ConfigCard import DataConfig as Data
 from ConfigCard import TrainConfig as Train
 from ConfigCard import EvalConfig as Eval
 
-#...Load model config card
+#...Create model
 
-from ModelCard import DeepSetsConfig as Config
-model = DeepSets(config=Config)
+model = model(config=Config)
 
 #...Create working folders
 
@@ -105,10 +104,6 @@ plot_class_score(test=Data.probs['jetnet'],
                 bins=50,
                 legends=['flow-matching', 'diffusion'])
 
-# a method for saving the Data.probs into numpy files
-def save_probs(Data, filename=Config.workdir+'/probs.npy'):
-        np.save(filename, Data)
+#...Save classifier scores
 
-save_probs(Data.probs['jetnet'].numpy(), filename=Config.workdir+'/results/jetnet_probs.npy')
-save_probs(Data.probs['flow-match'].numpy(), filename=Config.workdir+'/results/flow-match_probs.npy')
-save_probs(Data.probs['diffusion'].numpy(), filename=Config.workdir+'/results/diffusion_probs.npy')
+save_data(Data.probs, workdir=Config.workdir, name='probs')

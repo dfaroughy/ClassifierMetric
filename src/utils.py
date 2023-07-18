@@ -40,6 +40,12 @@ def save_configs(configs, filename):
     with open(filename, 'w') as f:
         json.dump(class_attributes, f, indent=4)
 
+def save_data(samples: dict, name: str, workdir : str):
+        for key in samples.keys():
+                sample = samples[key].numpy()
+                path = '{}/results/{}_{}.npy'.format(workdir, name, key) 
+                np.save(path, sample)
+
 def savefig(filename, extension="png"):
     counter = 1
     base_filename, ext = os.path.splitext(filename)
@@ -71,32 +77,6 @@ def savetensor(tensor, filename, save_dir, extension="npy", use_seed=None, verbo
         np.save(save_dir + file, tensor.cpu().detach().numpy())
     if verbose:
         print("INFO: saving {} to file -> {}".format(tensor.shape, file))
-
-
-def copy_parser(original_parser, description, modifications=False):
-    new_parser = argparse.ArgumentParser(description=description)
-    for action in original_parser._actions:
-        if action.dest == 'help':
-            continue
-        kwargs = {'dest':action.dest, 'type':action.type, 'help':action.help, 'default':action.default, 'required':action.required}
-        if modifications:
-            if action.dest in modifications:
-                kwargs.update(modifications[action.dest])
-        new_parser.add_argument(action.option_strings[0], **kwargs)
-    return new_parser
-
-
-def serialize(obj, name_only=True):
-    if callable(obj):
-        if name_only:
-            return obj.__name__
-        else:
-            return inspect.getsource(obj).strip()
-    return obj
-
-def args_to_json(args, name):
-    args_dict = {a: serialize(b) for a, b in vars(args).items()}
-    with open(args.workdir+'/'+name, 'w') as file: json.dump(args_dict, file, indent=4)
 
 
 def get_gpu_memory():
