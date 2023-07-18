@@ -3,7 +3,6 @@ import torch.nn as nn
 import numpy as np
 import h5py
 import sys
-import json
 
 from src.utils import make_dir, save_configs
 from src.plots import plot_class_score
@@ -14,10 +13,10 @@ from src.architectures import DeepSets
 sys.path.append("../")
 
 ''' Trains a classifier to distinguish between two models based on particle-level features.
-        The two models are:
-                1. Flow-Matching
-                2. Diffusion
-        The classifier is trained on the two models and evaluated on a reference dataset (JetNet).
+The two models are:
+  1. Flow-Matching
+  2. Diffusion
+The classifier is trained on the two models and evaluated on a reference dataset (JetNet).
 '''
 
 #...Load config cards
@@ -106,4 +105,3 @@ plot_class_score(test=Data.probs['jetnet'],
                 bins=50,
                 legends=['flow-matching', 'diffusion'])
 
-# store results:
