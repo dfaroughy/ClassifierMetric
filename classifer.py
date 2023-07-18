@@ -42,11 +42,10 @@ directory = '{}.{}.{}.hdims.{}x{}.layers.{}.batch'.format(Data.jet_type,
 Config.workdir = make_dir(directory, sub_dirs=['results'], overwrite=False)
 save_configs(configs=[Data, Train, Eval, Config], filename=Config.workdir+'/config.json')
 
-#...Load data
 
 Data_train, Data_eval = {}, {}
 
-#...Data from Model 1: Flow-Matching 
+#...Load Data from Model 1: Flow-Matching 
 
 data = np.load(Data.sets['flow-match'])
 data = torch.Tensor(data)
@@ -55,7 +54,7 @@ data.preprocess(methods=Data.preprocess)
 Data_train['flow-match'] = data.particles[:Train.size]
 Data_eval['flow-match']  = data.particles[Train.size : Train.size + Eval.size]
 
-#...Data for Model 2: Diffusion 
+#...Load Data from Model 2: Diffusion 
 
 data = h5py.File(Data.sets['diffusion'])
 data = torch.tensor(np.array(data['etaphipt_frac'])) 
@@ -64,7 +63,7 @@ data.preprocess(methods=Data.preprocess)
 Data_train['diffusion'] = data.particles[:Train.size] 
 Data_eval['diffusion']  = data.particles[Train.size : Train.size + Eval.size]
 
-#...Load and preprocess reference data for evaluation: JetNet 
+#...Load reference Data for evaluation: JetNet 
 
 data = h5py.File(Data.sets['jetnet'])
 data = torch.Tensor(np.array(data['particle_features']))
