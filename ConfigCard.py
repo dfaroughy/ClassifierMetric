@@ -9,15 +9,15 @@ class DataConfig:
                    }
 
     preprocess: dict = {
-                        'log_pt': {},
-                        # 'normalize': {},
-                        # 'logit_transform': {'alpha' : 1e-5},
-                        # 'standardize': {'sigma' : 1.0}
+                        # 'log_pt': {},
+                        'normalize': {},
+                        'logit_transform': {'alpha' : 1e-5},
+                        'standardize': {'sigma' : 1.0}
                         }
   
 class TrainConfig:
 
-    size : int = 15000
+    size : int = 150000
     test_size : float = 0.7    
     batch_size : int = 1024
     epochs : int = 3   
@@ -26,6 +26,6 @@ class TrainConfig:
 
 class EvalConfig:
 
-    size : int = 5000  
-    batch_size : int = 100 
+    size : int = 50000  
+    batch_size : int = 1024 
     class_label : int = 0
