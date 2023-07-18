@@ -1,6 +1,4 @@
-tops.DeepSets.128.hdims.3x3.layers.5000.batch__1/config.json
-tops.DeepSets.128.hdims.3x3.layers.5000.batch__2/config.json
-tops.DeepSets.128.hdims.3x3.layers.5000.batch__3/config.json
+tops.DeepSets.*
 .DS_Store
 .vscode/*
 data/ddim_200.h5
