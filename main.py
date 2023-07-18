@@ -39,7 +39,7 @@ directory = '{}.{}.{}.hdims.{}x{}.layers.{}.batch'.format(Data.jet_type,
                                                          Config.num_layers_1, 
                                                          Config.num_layers_2, 
                                                          Train.batch_size)
-Config.workdir = make_dir(directory, overwrite=False)
+Config.workdir = make_dir(directory, sub_dirs=[results], overwrite=False)
 save_configs(configs=[Data, Train, Eval, Config], filename=Config.workdir+'/config.json')
 
 #...Load data
@@ -99,7 +99,7 @@ plot_class_score(test=Data.probs['jetnet'],
                 models=[Data.probs['flow-match'], 
                         Data.probs['diffusion']],
                 label=Eval.class_label,
-                workdir=Config.workdir,
+                workdir=Config.workdir+'/results',
                 figsize=(5,5), 
                 xlim=(1e-5,1),
                 bins=50,
@@ -109,6 +109,6 @@ plot_class_score(test=Data.probs['jetnet'],
 def save_probs(Data, filename=Config.workdir+'/probs.npy'):
         np.save(filename, Data)
 
-save_probs(Data.probs['jetnet'].numpy(), filename=Config.workdir+'/jetnet_probs.npy')
-save_probs(Data.probs['flow-match'].numpy(), filename=Config.workdir+'/flow-match_probs.npy')
-save_probs(Data.probs['diffusion'].numpy(), filename=Config.workdir+'/diffusion_probs.npy')
+save_probs(Data.probs['jetnet'].numpy(), filename=Config.workdir+'/results/jetnet_probs.npy')
+save_probs(Data.probs['flow-match'].numpy(), filename=Config.workdir+'/results/flow-match_probs.npy')
+save_probs(Data.probs['diffusion'].numpy(), filename=Config.workdir+'/results/diffusion_probs.npy')
