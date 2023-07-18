@@ -4,30 +4,31 @@ from torch import Tensor
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-'''
-class for getting particle and jet features from jetnet-style data. 
-    - input events shape: (num_jets, num_consts, dim)
-    - features: (eta_rel, phi_rel, pt_rel)    
-attributes:
-    - particles features (eta_rel, phi_rel, pt_rel, e_rel, R)
-methods:
-    - get_jet_features: get jet features from constituent features
-    - get_mean_std: get mean and std of constituent features
-    - nth_particle: get nth particle feature
-    - pt_smear (distort): smear pt of constituents
-    - coordinate_shift (distort): shift eta and phi of constituents
-    - standardize (preprocess): standardize constituent features
-    - normalize (preprocess): normalize constituent features
-    - logit_transform (preprocess): apply logit transform to constituent features
-    - preprocess: apply preprocessing methods
-    - postprocess: apply postprocessing methods
-    - particle_plot: plot particle features
-    - jet_plot: plot jet features
-    - image: plot image of jet (for events and average events)
-'''
 
 class JetNetFeatures:
-    
+
+    '''
+    class for getting particle and jet features from jetnet-style data. 
+        - input events shape: (num_jets, num_consts, dim)
+        - features: (eta_rel, phi_rel, pt_rel)    
+    attributes:
+        - particles features (eta_rel, phi_rel, pt_rel, e_rel, R)
+    methods:
+        - get_jet_features: get jet features from constituent features
+        - get_mean_std: get mean and std of constituent features
+        - nth_particle: get nth particle feature
+        - pt_smear (distort): smear pt of constituents
+        - coordinate_shift (distort): shift eta and phi of constituents
+        - standardize (preprocess): standardize constituent features
+        - normalize (preprocess): normalize constituent features
+        - logit_transform (preprocess): apply logit transform to constituent features
+        - preprocess: apply preprocessing methods
+        - postprocess: apply postprocessing methods
+        - particle_plot: plot particle features
+        - jet_plot: plot jet features
+        - image: plot image of jet (for events and average events)
+    '''
+
     def __init__(self, 
                  events: torch.Tensor=None, 
                  masked: bool=False, 

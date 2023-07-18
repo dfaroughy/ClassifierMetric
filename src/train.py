@@ -2,8 +2,6 @@ import torch
 from torch import Tensor
 import torch.nn as nn
 import numpy as np
-import seaborn as sns
-import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
