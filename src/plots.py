@@ -4,26 +4,20 @@ import seaborn as sns
 
 def plot_loss(train, 
               valid, 
-              workdir, 
-              overwrite=False):
-
-    train_loss = train.losses
-    valid_loss = valid.losses
-    loss_min = valid.loss_min
-    fig, ax = plt.subplots(figsize=(8,7))
+              workdir):
+    fig, _ = plt.subplots(figsize=(8,7))
     plt.plot(range(len(train.losses)), np.array(train.losses), color='b', lw=1)
     plt.plot(range(len(valid.losses)), np.array(valid.losses), color='r', lw=1)
     plt.xlabel("Epochs")
     plt.ylabel("Loss")
     plt.yscale('log')
-    plt.title("loss_min={}, epochs={}".format(round(loss_min,6),len(train.losses)))
+    plt.title("loss_min={}, epochs={}".format(round(valid.loss_min,6),len(train.losses)))
     fig.tight_layout()
-    # plt.grid() 
     plt.savefig(workdir+'/loss.png')
     plt.close()
 
-def plot_class_score(test, 
-                     models, 
+def plot_class_score(test_probs, 
+                     model_probs, 
                      workdir, 
                      label,
                      figsize=(4,4), 
@@ -34,7 +28,7 @@ def plot_class_score(test,
                      legends=None):
 
     fig, ax = plt.subplots(1, figsize=figsize)
-    sns.histplot(x=test[..., label], 
+    sns.histplot(x=test_probs[..., label], 
                  color='k', 
                  bins=bins, 
                  element="step", 
@@ -45,9 +39,9 @@ def plot_class_score(test,
                  ax=ax, 
                  label='test')
 
-    for i, x in enumerate(models):
+    for i, x in enumerate(model_probs):
         x = x[..., label] 
-        legends = [None] * len(models) if legends is None else legends
+        legends = [None] * len(model_probs) if legends is None else legends
         sns.histplot(x=x, 
                      bins=bins, 
                      element="step", 

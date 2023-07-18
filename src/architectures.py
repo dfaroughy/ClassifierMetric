@@ -1,30 +1,28 @@
 import torch
 from torch import Tensor
 import torch.nn as nn
-import numpy as np
-import torch.nn.functional as F
-# from torch_cluster import knn_graph
-# from torch_geometric.nn import EdgeConv, global_mean_pool
 
-
+#################################
 '''
 Possible classifier architectures:
     - Multi-Layer Perceptron
     - Deep Sets 
-    - Particle Net
-    TODO: - Transformer
+    TODO: fix Particle Net
+    TODO: implement Transformer
 '''
+#################################
+
+#...wrapper classes
 
 class MLP(nn.Module):
-    ''' Wrapper class for the MLP architecture
-    '''
-    def __init__(self, config):
+    ''' Wrapper class for the MLP architecture'''
+    def __init__(self, model_config):
         super(MLP, self).__init__()
-        self.wrapper = _MLP(dim=config.dim_input, 
-                            num_classes=config.dim_output,
-                            dim_hidden=config.dim_hidden, 
-                            num_layers=config.num_layers,
-                            device=config.device)
+        self.wrapper = _MLP(dim=model_config.dim_input, 
+                            num_classes=model_config.dim_output,
+                            dim_hidden=model_config.dim_hidden, 
+                            num_layers=model_config.num_layers,
+                            device=model_config.device)
     def forward(self, x):
         return self.wrapper.forward(x)
     def loss(self, batch):
@@ -34,18 +32,17 @@ class MLP(nn.Module):
         return self.wrapper.probability(x)
 
 class DeepSets(nn.Module):
-    ''' Wrapper class for the Deep Sets architecture
-    '''
-    def __init__(self, config):
+    ''' Wrapper class for the Deep Sets architecture'''
+    def __init__(self, model_config):
         super(DeepSets, self).__init__()
-        self.dim_features = config.dim_input
-        self.device = config.device
-        self.wrapper = _DeepSets(dim=config.dim_input, 
-                                num_classes=config.dim_output,
-                                dim_hidden=config.dim_hidden, 
-                                num_layers_1=config.num_layers_1,
-                                num_layers_2=config.num_layers_2,
-                                device=config.device)
+        self.dim_features = model_config.dim_input
+        self.device = model_config.device
+        self.wrapper = _DeepSets(dim=model_config.dim_input, 
+                                num_classes=model_config.dim_output,
+                                dim_hidden=model_config.dim_hidden, 
+                                num_layers_1=model_config.num_layers_1,
+                                num_layers_2=model_config.num_layers_2,
+                                device=model_config.device)
     def forward(self, x):
         return self.wrapper.forward(x)
     def loss(self, batch):
@@ -66,47 +63,6 @@ class DeepSets(nn.Module):
             batch_prob = torch.nn.functional.softmax(logits, dim=1)
             probs.append(batch_prob)
         return torch.cat(probs, dim=0).detach().cpu() 
-
-
-# class ParticleNet(nn.Module):
-#     ''' Wrapper class for the Particle Net architecture
-#     '''
-#     def __init__(self, config):
-#         super(ParticleNet, self).__init__()
-#         self.dim_features = config.dim_input
-#         self.device = config.device
-#         conv_1 = (config.num_knn, tuple([config.dim_conv_1] * config.num_layers_1))
-#         conv_2 = (config.num_knn, tuple([config.dim_conv_2] * config.num_layers_2))
-#         self.wrapper = _ParticleNet(dim_features=config.dim_input, 
-#                                     num_classes=config.dim_output,
-#                                     conv_params=[conv_1, conv_2],
-#                                     fc_params=[(config.dim_hidden, config.dropout)],
-#                                     pooling=config.pooling,
-#                                     device=config.device)
-#     def forward(self, x, mask):
-#         points = x[..., :2] # (eta, phi)
-#         features = x[..., 2 : self.dim_features] # (pt, pt_rel, R)
-#         return self.wrapper.forward(points, features, mask)
-    
-#     def loss(self, batch):
-#         batch = batch.to(self.device)
-#         features, mask, labels = batch[..., :self.dim_features], batch[..., -2, None], batch[..., -1].long()[:,0]
-#         output = self.forward(features, mask)
-#         criterion = nn.CrossEntropyLoss()
-#         loss = criterion(output, labels)
-#         return loss
-    
-#     @torch.no_grad()
-#     def probability(self, x, batch_size=1024): 
-#         num_batches = x.shape[0] // batch_size
-#         batches = torch.chunk(x, num_batches, dim=0)
-#         probs = []
-#         for batch in batches:
-#             features, mask = batch[..., :self.dim_features].to(self.device), batch[..., -2, None].to(self.device)
-#             logits = self.forward(features, mask)
-#             batch_prob = torch.nn.functional.softmax(logits, dim=1)
-#             probs.append(batch_prob)
-#         return torch.cat(probs, dim=0).detach().cpu() 
 
 
 #...architecture classes
@@ -176,33 +132,6 @@ class _DeepSets(nn.Module):
         h = self.rho(h)                                                      # shape: (N, output_dim)
         return h
 
-# from torch_cluster import knn_graph
-# from torch_geometric.nn import EdgeConv, global_mean_pool
-
-
-# class _ParticleNetEdgeNet(nn.Module):
-#     def __init__(self, in_size, layer_size):
-#         super(_ParticleNetEdgeNet, self).__init__()
-
-#         layers = []
-
-#         layers.append(nn.Linear(in_size * 2, layer_size))
-#         layers.append(nn.BatchNorm1d(layer_size))
-#         layers.append(nn.ReLU())
-
-#         for i in range(2):
-#             layers.append(nn.Linear(layer_size, layer_size))
-#             layers.append(nn.BatchNorm1d(layer_size))
-#             layers.append(nn.ReLU())
-
-#         self.model = nn.Sequential(*layers)
-
-#     def forward(self, x):
-#         return self.model(x)
-
-#     def __repr__(self):
-#         return "{}(nn={})".format(self.__class__.__name__, self.model)
-    
 
 # class ParticleNet(nn.Module):
 #     ''' Wrapper class for the Particle Net architecture

@@ -1,14 +1,11 @@
 import torch
-import torch.nn as nn
 import numpy as np
 import h5py
-import sys
+
 from src.utils import make_dir, save_configs, save_data
 from src.plots import plot_class_score
 from src.jetnet import JetNetFeatures
 from src.train import MultiClassifierTest
-
-sys.path.append("../")
 
 ''' Trains a classifier to distinguish between two models based on particle-level features.
 The two models are:
@@ -17,18 +14,17 @@ The two models are:
 The classifier is trained on the two models and evaluated on a reference dataset (JetNet).
 '''
 
-#...Load model and config cards
+###################################################
+#...Import model and configuration cards
 
-from src.architectures import DeepSets as model
-
-from ModelCard import DeepSetsConfig as Config
 from ConfigCard import DataConfig as Data
 from ConfigCard import TrainConfig as Train
 from ConfigCard import EvalConfig as Eval
+from ModelCard import DeepSetsConfig as Config
+from src.architectures import DeepSets as deepsets
+model = deepsets(model_config=Config)
 
-#...Create model
-
-model = model(config=Config)
+###################################################
 
 #...Create working folders
 
@@ -38,7 +34,8 @@ directory = '{}.{}.{}.hdims.{}x{}.layers.{}.batch'.format(Data.jet_type,
                                                          Config.num_layers_1, 
                                                          Config.num_layers_2, 
                                                          Train.batch_size)
-Config.workdir = make_dir(directory, sub_dirs=[results], overwrite=False)
+
+Config.workdir = make_dir(directory, sub_dirs=['results'], overwrite=False)
 save_configs(configs=[Data, Train, Eval, Config], filename=Config.workdir+'/config.json')
 
 #...Load data
@@ -85,18 +82,15 @@ classifier.train()
 
 #...Evaluate classifier on samples
 
-Data.probs = {}
-Data.probs['jetnet'] = classifier.model.probability(Data_eval['jetnet'], batch_size=Eval.batch_size)
-Data.probs['flow-match'] = classifier.model.probability(Data_eval['flow-match'], batch_size=Eval.batch_size)
-Data.probs['diffusion'] = classifier.model.probability(Data_eval['diffusion'], batch_size=Eval.batch_size)
-
-print(Data.probs)
+probs = {}
+probs['jetnet'] = classifier.model.probability(Data_eval['jetnet'], batch_size=Eval.batch_size)
+probs['flow-match'] = classifier.model.probability(Data_eval['flow-match'], batch_size=Eval.batch_size)
+probs['diffusion'] = classifier.model.probability(Data_eval['diffusion'], batch_size=Eval.batch_size)
 
 #...Plot classifier scores
 
-plot_class_score(test=Data.probs['jetnet'], 
-                models=[Data.probs['flow-match'], 
-                        Data.probs['diffusion']],
+plot_class_score(test_probs=probs['jetnet'], 
+                model_probs=[probs['flow-match'], probs['diffusion']],
                 label=Eval.class_label,
                 workdir=Config.workdir+'/results',
                 figsize=(5,5), 
@@ -106,4 +100,4 @@ plot_class_score(test=Data.probs['jetnet'],
 
 #...Save classifier scores
 
-save_data(Data.probs, workdir=Config.workdir, name='probs')
+save_data(probs, workdir=Config.workdir, name='probs')
