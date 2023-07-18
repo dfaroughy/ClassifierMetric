@@ -12,6 +12,10 @@ The two models are:
   1. Flow-Matching
   2. Diffusion
 The classifier is trained on the two models and evaluated on a reference dataset (JetNet).
+
+TODO : select reference jetnet data in accordance to the train/test split of models
+TODO : fix ParticleNet 
+
 '''
 
 ###################################################
