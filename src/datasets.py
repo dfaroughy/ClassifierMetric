@@ -1,13 +1,12 @@
-from torch.utils.data import Dataset
 import torch
 import numpy as np
 import os
 import h5py
 from tabulate import tabulate
-
+from torch.utils.data import Dataset
 from src.jetnet import JetNetFeatures
 
-class JetNetDataLoader(Dataset):
+class JetNetDataSets(Dataset):
 
     ''' Arguments:
         - `dir_path` : path to data files
@@ -81,7 +80,7 @@ class JetNetDataLoader(Dataset):
             mask = (data[..., 0] + data[..., 1] + data[..., 2] != 0).int().unsqueeze(-1) 
             features += [mask]
             data = torch.cat(features, dim=-1)          
-            data = self.pt_order(data)
+            data = self._pt_order(data)
 
             #...clip negative pt values
 
@@ -89,7 +88,7 @@ class JetNetDataLoader(Dataset):
                 data_clip = torch.clone(data)    
                 data = torch.zeros_like(data)
                 data[data_clip[..., 2] >= 0.0] = data_clip[data_clip[..., 2] >= 0.0]
-                data = self.pt_order(data)
+                data = self._pt_order(data)
 
             #...preprocess data
 
@@ -98,7 +97,7 @@ class JetNetDataLoader(Dataset):
                 _data.preprocess(methods=self.preprocess, name=name)
                 data = _data.particles
 
-            #...remove sofetst jet constituents if more than 'num_constituents'
+            #...remove softest jet constituents if more than 'num_constituents'
 
             if P > self.num_consts:
                 data = data[:, :self.num_consts, :]
@@ -110,7 +109,7 @@ class JetNetDataLoader(Dataset):
             labels = torch.full_like(data[..., 0], label).unsqueeze(-1)
             return data, labels
     
-    def pt_order(self, data):
+    def _pt_order(self, data):
         _ , i = torch.sort(torch.abs(data[:, :, 2]), dim=1, descending=True) 
         return torch.gather(data, 1, i.unsqueeze(-1).expand_as(data)) 
         
@@ -180,12 +179,6 @@ class JetNetDataLoader(Dataset):
     def data_summary(self):
         table = []
         headers = ['Sample Name', 'Filename', 'Extension', 'Key', 'Shape', 'Class Label']
-        # for name, filename, key, label in self.data_list:
-        #     filename, ext = os.path.splitext(filename)
-        #     shape = self.load_file(filename, key).shape
-        #     table.append([name, filename, ext, key, shape, label])
-        # print(tabulate(table, headers=headers))
-
         for name, filename, key, label in self.data_list:
             data = self.load_file(filename, key)
             filename, ext = os.path.splitext(filename)
