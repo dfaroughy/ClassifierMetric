@@ -1,13 +1,11 @@
 tops.DeepSets.*
 .DS_Store
 .vscode/*
-data/ddim_200.h5
-data/t150.hdf5
-data/generated_data_FM.npy
+data/*
 __pycache__/*
 test.py
 ModelCard.py
 ConfigCard.py
-test/config.json
+test/*
 src/__pycache__/*
 
