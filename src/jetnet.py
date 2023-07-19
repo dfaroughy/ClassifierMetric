@@ -186,6 +186,7 @@ class JetNetFeatures:
                       ylog=True, 
                       fill=True, 
                       ax=None,  
+                      ls='-',
                       figsize=(3,3)): 
         
         idx = {'eta_rel':0, 'phi_rel':1, 'pt_rel':2, 'R':3}        
@@ -198,7 +199,7 @@ class JetNetFeatures:
         
         fig, ax = plt.subplots(1, figsize=figsize) if ax is None else (None, ax)
         lw, alpha = (0.0, 0.2) if fill else (0.75, 1.0)
-        sns.histplot(x=x, color=color, bins=bins, element="step", log_scale=(xlog, ylog), lw=lw, fill=fill, alpha=alpha, ax=ax) 
+        sns.histplot(x=x, color=color, bins=bins, element="step", log_scale=(xlog, ylog), lw=lw, ls=ls, fill=fill, alpha=alpha, ax=ax) 
         plt.xlabel(r'{}'.format(feature))
 
     def jet_plot(self, 
@@ -209,6 +210,7 @@ class JetNetFeatures:
                  ylog=True,                
                  fill=True,
                  ax=None,
+                 ls='-',
                  figsize=(3,3)):
         
         idx = {'pt_rel':0, 'eta_rel':1, 'phi_rel':2, 'm_rel':3, 'e_rel':4, 'pz_rel':5, 'multiplicity':6}
@@ -216,7 +218,7 @@ class JetNetFeatures:
         
         fig, ax = plt.subplots(1, figsize=figsize) if ax is None else (None, ax)
         lw, alpha = (0.0, 0.2) if fill else (1.0, 1.0)
-        sns.histplot(x=x, color=color, bins=bins, element="step", log_scale=(xlog, ylog), lw=lw, fill=fill, alpha=alpha, ax=ax) 
+        sns.histplot(x=x, color=color, bins=bins, element="step", log_scale=(xlog, ylog), lw=lw,  ls=ls, fill=fill, alpha=alpha, ax=ax) 
         plt.xlabel(r'{}'.format(feature))
        
         
