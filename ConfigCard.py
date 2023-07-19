@@ -3,13 +3,12 @@ class DataConfig:
     jet_type : str = 'tops'
 
     sets : dict = {
-                   'jetnet'     : 'data/t150.hdf5',
-                   'flow-match' : 'data/generated_data_FM.npy',
-                   'diffusion'  : 'data/ddim_200.h5'
+                   'flow-match' : ('generated_data_FM.npy', None),
+                   'diffusion'  : ('ddim_200.h5', 'etaphipt_frac'),
+                   'jetnet'     : ('t150.hdf5', 'particle_features')
                    }
 
     preprocess: dict = {
-                        # 'log_pt': {},
                         'normalize': {},
                         'logit_transform': {'alpha' : 1e-5},
                         'standardize': {'sigma' : 1.0}
