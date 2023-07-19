@@ -213,7 +213,7 @@ class JetNetFeatures:
                  ls='-',
                  figsize=(3,3)):
         
-        idx = {'pt_rel':0, 'eta_rel':1, 'phi_rel':2, 'm_rel':3, 'e_rel':4, 'pz_rel':5, 'multiplicity':6}
+        idx = {'pt_rel':0, 'eta_rel':1, 'phi_rel':2, 'm_rel':3, 'e_rel':4, 'multiplicity':5}
         x = self.jets[..., idx[feature]]
         
         fig, ax = plt.subplots(1, figsize=figsize) if ax is None else (None, ax)

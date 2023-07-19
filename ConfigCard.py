@@ -9,7 +9,10 @@ class TrainConfig:
     datafiles : dict = {'fm_midpoint' : ('fm_tops150_mp200nfe.h5', 'etaphipt'),
                         'fm_euler'    : ('fm_tops150_eu200nfe.h5', 'etaphipt'),
                         'diff_ddim'   : ('ddim_200.h5', 'etaphipt_frac')}
-
+                        
+    labels : dict = {'fm_midpoint' : 0,
+                        'fm_euler' : 1,
+                        'diff_ddim': 2}
     size : int = None
     test_size : float = 0.7    
     batch_size : int = 1024
