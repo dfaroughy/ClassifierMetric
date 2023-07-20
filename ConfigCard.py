@@ -4,6 +4,16 @@ class DataConfig:
     preprocess: dict = {'normalize': {},
                         'logit_transform': {'alpha' : 1e-5},
                         'standardize': {'sigma' : 1.0}}
+    
+
+    datafiles : dict = {'fm_midpoint' : ('fm_tops150_mp200nfe.h5', 'etaphipt'),
+                        'fm_euler'    : ('fm_tops150_eu200nfe.h5', 'etaphipt'),
+                        'diff_ddim'   : ('ddim_200.h5', 'etaphipt_frac')}
+                        
+    labels : dict = {'fm_midpoint' : 0,
+                        'fm_euler' : 1,
+                        'diff_ddim': 2}
+    
 class TrainConfig:
 
     datafiles : dict = {'fm_midpoint' : ('fm_tops150_mp200nfe.h5', 'etaphipt'),

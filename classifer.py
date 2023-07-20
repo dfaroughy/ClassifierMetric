@@ -56,21 +56,22 @@ train_data = JetNetDataSets(dir_path='data/',
                               particle_features=['eta_rel', 'phi_rel', 'pt_rel', 'R', 'e_rel']
                               )
 
-eval_data = JetNetDataSets( dir_path='data/', 
-                              data_files=EvalConfig.datafiles,
-                              num_jets=EvalConfig.size,
-                              num_constituents=150, 
-                              clip_neg_pt=True,
-                              particle_features=['eta_rel', 'phi_rel', 'pt_rel', 'R', 'e_rel']
-                              )
+test_data = JetNetDataSets(dir_path='data/', 
+                           data_files=EvalConfig.datafiles,
+                           num_jets=EvalConfig.size,
+                           num_constituents=150, 
+                           clip_neg_pt=True,
+                           particle_features=['eta_rel', 'phi_rel', 'pt_rel', 'R', 'e_rel']
+                           )
 
 print(train_data.data_summary())
-print(eval_data.data_summary())
+print(test_data.data_summary())
 
 #...Train classifier for discriminating between Model 1 and 2
 
 classifier = MultiClassifierTest(classifier=model, 
-                                samples=(Data_train['flow-match'], Data_train['diffusion']), 
+                                train_samples=train_data,
+                                test_samples=test_data, 
                                 epochs=TrainConfig.epochs, 
                                 lr=TrainConfig.lr, 
                                 early_stopping=TrainConfig.early_stopping,

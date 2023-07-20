@@ -6,6 +6,7 @@ from tabulate import tabulate
 from torch.utils.data import Dataset
 from src.jetnet import JetNetFeatures
 
+
 class JetNetDataSets(Dataset):
 
     ''' Arguments:
@@ -43,149 +44,108 @@ class JetNetDataSets(Dataset):
         self.particle_features = particle_features
         self.preprocess = preprocess 
         self.clip_neg_pt = clip_neg_pt
-        self.data_list = self.load_data_list()
+        self.jets, self.labels = self.dataloader()
+ 
+    #...data formatting methods
+
+    def format_data(self, data):
+        data = self.zero_padding(data)
+        data = self.get_particle_features(data)
+        data = self.clip_negative_pt(data) 
+        data = self.remove_soft_particles(data)
+        return data
+
+    def zero_padding(self, data):
+        N, P, D = data.shape
+        if P < self.num_consts:
+            zero_rows = torch.zeros(N, self.num_consts - P, D)
+            return torch.cat((data, zero_rows), dim=1) 
+        else: 
+            return data
         
-    def __len__(self):
-        return len(self.data_list)
-    
-    def __getitem__(self, idx):
-        name, filename, key, label = self.data_list[idx]
-        data = torch.Tensor(self.load_file(filename, key))
-
-        N = data.shape[0]
-
-        if len(data.shape) == 3:
-
-            N, P, D = data.shape
-            
-            #...fill with zero padding up to 'num_constituents'
-
-            if D < 3: raise ValueError('Data has wrong shape: {}'.format(data.shape))
-            elif P < self.num_consts: 
-                zero_rows = torch.zeros(N, self.num_consts - P, D)
-                data = torch.cat((data, zero_rows), dim=1) 
-
-            #...get particle features
-
-            pf = {}
-            pf['eta_rel'] = data[..., 0, None]
-            pf['phi_rel'] = data[..., 1, None]
-            pf['pt_rel'] = data[..., 2, None]
-            pf['R'] = torch.sqrt(pf['eta_rel']**2 + pf['phi_rel']**2)
-            pf['e_rel'] = pf['pt_rel'] * torch.cosh(pf['eta_rel'])
-            features = [pf[f] for f in self.particle_features]
-
-            #...add mask to indicate which particles are padded
-
+    def get_particle_features(self, data, masked=True): 
+        pf = {}
+        pf['eta_rel'] = data[..., 0, None]
+        pf['phi_rel'] = data[..., 1, None]
+        pf['pt_rel'] = data[..., 2, None]
+        pf['R'] = torch.sqrt(pf['eta_rel']**2 + pf['phi_rel']**2)
+        pf['e_rel'] = pf['pt_rel'] * torch.cosh(pf['eta_rel'])
+        features = [pf[f] for f in self.particle_features]
+        if masked:
             mask = (data[..., 0] + data[..., 1] + data[..., 2] != 0).int().unsqueeze(-1) 
             features += [mask]
-            data = torch.cat(features, dim=-1)          
-            data = self._pt_order(data)
-
-            #...clip negative pt values
-
-            if self.clip_neg_pt:
-                data_clip = torch.clone(data)    
-                data = torch.zeros_like(data)
-                data[data_clip[..., 2] >= 0.0] = data_clip[data_clip[..., 2] >= 0.0]
-                data = self._pt_order(data)
-
-            #...preprocess data
-
-            if self.preprocess is not None:
-                _data = JetNetFeatures(data)
-                _data.preprocess(methods=self.preprocess, name=name)
-                data = _data.particles
-
-            #...remove softest jet constituents if more than 'num_constituents'
-
-            if P > self.num_consts:
-                data = data[:, :self.num_consts, :]
-
-        if label is None: 
-            return data[:self.num_jets if self.num_jets is not None else N]
-        else:
-            data = data[:self.num_jets if self.num_jets is not None else N] 
-            labels = torch.full_like(data[..., 0], label).unsqueeze(-1)
-            return data, labels
+        data = torch.cat(features, dim=-1)          
+        return self.pt_order(data)
     
-    def _pt_order(self, data):
+    def clip_negative_pt(self, data):
+        data_clip = torch.clone(data)    
+        data = torch.zeros_like(data)
+        data[data_clip[..., 2] >= 0.0] = data_clip[data_clip[..., 2] >= 0.0]
+        return self.pt_order(data) if self.clip_neg_pt else data
+    
+    def remove_soft_particles(self, data):
+        _, P, _ = data.shape
+        return  data[:, :self.num_consts, :] if P > self.num_consts else data
+
+    def pt_order(self, data):
         _ , i = torch.sort(torch.abs(data[:, :, 2]), dim=1, descending=True) 
         return torch.gather(data, 1, i.unsqueeze(-1).expand_as(data)) 
         
-    def load_file(self, filename, key):
-        filename = os.path.join(self.path, filename)
-        if filename.endswith('.npy'):
-            return np.load(filename)
-        elif filename.endswith('.hdf5'):
-            with h5py.File(filename, 'r') as f:
-                return np.array(f[key])
-        elif filename.endswith('.h5'):
-            with h5py.File(filename, 'r') as f:
-                return np.array(f[key])
-        else:
-            raise ValueError('No such file format: {}'.format(filename))
-        
-    def load_data_list(self):
+    #...dataset loading methods
 
-        data_list = []
+    def __len__(self):
+        return self.jets[0].size(0)
+    
+    def __getitem__(self, idx):
+
+        if self.preprocess is not None: 
+            # TODO implement jet-level preprocessing
+            # mean, std, min, max are available at this point!
+            pass
+
+        return self.jets[idx], self.labels[idx]
+
+    def dataloader(self):
+
+        samples = []
+        labels = []
 
         for root, dirs, files in os.walk(self.path):
-            i = 0
             for file in files:
                 key = None
                 path = os.path.join(root, file)
-
-                # numpy files
-                if file.endswith('.npy'):
-                    i+=1
-                    if self.data_files is not None:
-                        for k in self.data_files.keys():
-                            if file in self.data_files[k][0] and key==self.data_files[k][1]:
-                                label = None if self.data_class_labels is None else self.data_class_labels[k]
-                                data_list.append((k, file, key, label))  
-                    else:
-                        label = None if self.data_class_labels is None else i
-                        data_list.append(('sample_{}'.format(i), file, key, label))   
-
                 # hdf5 files
-                elif file.endswith('.hdf5'):
+                if file.endswith('.hdf5') or file.endswith('.h5'):
                     with h5py.File(path, 'r') as f:
                         for key in f.keys():
-                            i+=1
                             if self.data_files is not None:
                                 for k in self.data_files.keys():
                                     if file in self.data_files[k][0] and key==self.data_files[k][1]:
                                         label = None if self.data_class_labels is None else self.data_class_labels[k]
-                                        data_list.append((k, file, key, label))
-                            else:
-                                label = None if self.data_class_labels is None else i
-                                data_list.append(('sample_{}'.format(i), file, key, label))
+                                        data = torch.Tensor(np.array(f[key]))
+                                        data = self.format_data(data)
+                                        samples.append(data)
+                                        labels.append(torch.full((data.shape[0],), label))
+        
+        samples = torch.cat(samples, dim=0)
+        labels = torch.cat(labels, dim=0) 
+        samples_flat = samples.view(-1, samples.shape[-1])
+        mask = samples_flat[:, -1].bool()
+        self.mean = torch.mean(samples_flat[mask],dim=0)
+        self.std = torch.std(samples_flat[mask],dim=0)
+        self.min,_ = torch.min(samples_flat[mask],dim=0)
+        self.max,_ = torch.max(samples_flat[mask],dim=0)
 
-                elif file.endswith('.h5'):
-                    with h5py.File(path, 'r') as f:
-                        for key in f.keys():
-                            i+=1
-                            if self.data_files is not None:
-                                for k in self.data_files.keys():
-                                    if file in self.data_files[k][0] and key==self.data_files[k][1]:
-                                        label = None if self.data_class_labels is None else self.data_class_labels[k]
-                                        data_list.append((k, file, key, label))
-                            else:
-                                label = None if self.data_class_labels is None else i
-                                data_list.append(('sample_{}'.format(i), file, key, label))
-        return data_list
+        return samples, labels
     
     def data_summary(self):
         table = []
         headers = ['Sample Name', 'Filename', 'Extension', 'Key', 'Shape', 'Class Label']
-        for name, filename, key, label in self.data_list:
+        for name, filename, key, label in self.jet_list:
             data = self.load_file(filename, key)
             filename, ext = os.path.splitext(filename)
             filename = os.path.basename(filename)
             table.append([name, filename, ext, key, str(data.shape), label])
 
         print(tabulate(table, headers=headers, tablefmt='pretty'))  
-
-
 

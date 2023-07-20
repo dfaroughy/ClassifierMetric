@@ -14,7 +14,8 @@ class MultiClassifierTest:
 
     def __init__(self, 
                  classifier, 
-                 datasets: JetNetDataSets = None,
+                 train_samples: JetNetDataSets = None,
+                 test_samples: JetNetDataSets = None,
                  epochs: int=100, 
                  lr: float=0.001, 
                  early_stopping : int=10,
@@ -29,12 +30,14 @@ class MultiClassifierTest:
         self.seed = seed
         self.early_stopping = early_stopping 
         self.epochs = epochs
-        self.datasets = datasets   
-        
-    def DataLoader(self, test_size, batch_size):
-        train, test  = train_test_split(self.data, test_size=test_size, random_state=self.seed)
-        self.train_sample = DataLoader(dataset=torch.Tensor(train), batch_size=batch_size, shuffle=True)
-        self.test_sample = DataLoader(dataset=torch.Tensor(test),  batch_size=batch_size, shuffle=False)
+        self.train_samples = train_samples   
+        self.test_samples = test_samples   
+
+    # def DataLoader(self, test_size, batch_size):
+    #     train, test  = train_test_split(self.data, test_size=test_size, random_state=self.seed)
+    #     self.train_sample = DataLoader(dataset=torch.Tensor(train), batch_size=batch_size, shuffle=True)
+    #     self.test_sample = DataLoader(dataset=torch.Tensor(test),  batch_size=batch_size, shuffle=False)
+    
     
     def train(self):
         
