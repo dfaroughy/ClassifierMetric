@@ -7,7 +7,7 @@ from torch.utils.data import Dataset
 from src.jetnet import JetNetFeatures
 
 
-class JetNetDataSets(Dataset):
+class JetNetDataset(Dataset):
 
     ''' Arguments:
         - `dir_path` : path to data files
@@ -97,16 +97,10 @@ class JetNetDataSets(Dataset):
         return self.jet_list[0].size(0)
     
     def __getitem__(self, idx):
-
         jet, labels = self.jet_list
-
         if self.preprocess is not None: 
-            # TODO implement jet-level preprocessing
-            # mean, std, min, max are available at this point!
+            # jet = JetNetPreprocess(method, params)
             pass
-
-        # print(self.mean, self.std, self.min, self.max)
-
         return jet[idx], labels[idx]
 
     def dataloader(self):
@@ -155,3 +149,35 @@ class JetNetDataSets(Dataset):
 
         print(tabulate(table, headers=headers, tablefmt='pretty'))  
 
+
+class JetNetPreprocess:
+
+    ''' Arguments:
+        - `method` : preprocessing method to apply, default is `None`
+        - `params` : parameters for preprocessing method, default is `None`
+        
+        Applies preprocessing methods to data.
+    '''
+    
+    def __init__(self, method=None, params=None):
+        self.method = method
+        self.params = params
+        
+    def __call__(self, data):
+        if self.method == 'normalize':
+            return self.normalize(data, self.params['mean'], self.params['std'])
+        elif self.method == 'logit_transform':
+            return self.logit_transform(data, self.params['alpha'])
+        elif self.method == 'standardize':
+            return self.standardize(data, self.params['mean'], self.params['std'])
+        else:
+            raise ValueError(f'Preprocessing method {self.method} not implemented.')
+    
+    def normalize(self, data, mean, std):
+        return (data - mean) / std
+    
+    def logit_transform(self, data, alpha):
+        return torch.log(data / (1 - data) + alpha)
+    
+    def standardize(self, data, mean, std):
+        return (data - mean) / std
