@@ -44,7 +44,7 @@ class JetNetDataSets(Dataset):
         self.particle_features = particle_features
         self.preprocess = preprocess 
         self.clip_neg_pt = clip_neg_pt
-        self.jets, self.labels = self.dataloader()
+        self.jet_list = self.dataloader()
  
     #...data formatting methods
 
@@ -98,12 +98,13 @@ class JetNetDataSets(Dataset):
     
     def __getitem__(self, idx):
 
+        jet, labels = self.jet_list[idx]
         if self.preprocess is not None: 
             # TODO implement jet-level preprocessing
             # mean, std, min, max are available at this point!
             pass
 
-        return self.jets[idx], self.labels[idx]
+        return jet, labels
 
     def dataloader(self):
 
@@ -124,6 +125,7 @@ class JetNetDataSets(Dataset):
                                         label = None if self.data_class_labels is None else self.data_class_labels[k]
                                         data = torch.Tensor(np.array(f[key]))
                                         data = self.format_data(data)
+                                        data = data[:self.num_jets]
                                         samples.append(data)
                                         labels.append(torch.full((data.shape[0],), label))
         
