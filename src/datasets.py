@@ -94,17 +94,20 @@ class JetNetDataSets(Dataset):
     #...dataset loading methods
 
     def __len__(self):
-        return self.jets[0].size(0)
+        return self.jet_list[0].size(0)
     
     def __getitem__(self, idx):
 
-        jet, labels = self.jet_list[idx]
+        jet, labels = self.jet_list
+
         if self.preprocess is not None: 
             # TODO implement jet-level preprocessing
             # mean, std, min, max are available at this point!
             pass
 
-        return jet, labels
+        # print(self.mean, self.std, self.min, self.max)
+
+        return jet[idx], labels[idx]
 
     def dataloader(self):
 
@@ -131,6 +134,7 @@ class JetNetDataSets(Dataset):
         
         samples = torch.cat(samples, dim=0)
         labels = torch.cat(labels, dim=0) 
+
         samples_flat = samples.view(-1, samples.shape[-1])
         mask = samples_flat[:, -1].bool()
         self.mean = torch.mean(samples_flat[mask],dim=0)
