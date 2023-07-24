@@ -7,6 +7,7 @@ from torch.utils.data import Dataset
 from src.jetnet import JetNetFeatures
 
 
+
 class JetNetDataset(Dataset):
 
     ''' Arguments:
@@ -32,9 +33,9 @@ class JetNetDataset(Dataset):
                  data_class_labels: dict=None,
                  num_jets: int=None,
                  num_constituents: int=150,
+                 preprocess : bool=False,
                  particle_features: list=['eta_rel', 'phi_rel', 'pt_rel'],
-                 preprocess: dict=None,
-                 clip_neg_pt: bool=False):
+                 clip_negative_pt: bool=False):
         
         self.path = dir_path
         self.data_files = data_files
@@ -42,76 +43,27 @@ class JetNetDataset(Dataset):
         self.num_jets = num_jets
         self.num_consts = num_constituents
         self.particle_features = particle_features
+        self.clip_negative_pt = clip_negative_pt
         self.preprocess = preprocess 
-        self.clip_neg_pt = clip_neg_pt
-        self.jet_list = self.dataloader()
+        self.dataset_list = self.get_data()
  
-    #...data formatting methods
-
-    def format_data(self, data):
-        data = self.zero_padding(data)
-        data = self.get_particle_features(data)
-        data = self.clip_negative_pt(data) 
-        data = self.remove_soft_particles(data)
-        return data
-
-    def zero_padding(self, data):
-        N, P, D = data.shape
-        if P < self.num_consts:
-            zero_rows = torch.zeros(N, self.num_consts - P, D)
-            return torch.cat((data, zero_rows), dim=1) 
-        else: 
-            return data
-        
-    def get_particle_features(self, data, masked=True): 
-        pf = {}
-        pf['eta_rel'] = data[..., 0, None]
-        pf['phi_rel'] = data[..., 1, None]
-        pf['pt_rel'] = data[..., 2, None]
-        pf['R'] = torch.sqrt(pf['eta_rel']**2 + pf['phi_rel']**2)
-        pf['e_rel'] = pf['pt_rel'] * torch.cosh(pf['eta_rel'])
-        features = [pf[f] for f in self.particle_features]
-        if masked:
-            mask = (data[..., 0] + data[..., 1] + data[..., 2] != 0).int().unsqueeze(-1) 
-            features += [mask]
-        data = torch.cat(features, dim=-1)          
-        return self.pt_order(data)
-    
-    def clip_negative_pt(self, data):
-        data_clip = torch.clone(data)    
-        data = torch.zeros_like(data)
-        data[data_clip[..., 2] >= 0.0] = data_clip[data_clip[..., 2] >= 0.0]
-        return self.pt_order(data) if self.clip_neg_pt else data
-    
-    def remove_soft_particles(self, data):
-        _, P, _ = data.shape
-        return  data[:, :self.num_consts, :] if P > self.num_consts else data
-
-    def pt_order(self, data):
-        _ , i = torch.sort(torch.abs(data[:, :, 2]), dim=1, descending=True) 
-        return torch.gather(data, 1, i.unsqueeze(-1).expand_as(data)) 
-        
-    #...dataset loading methods
-
     def __len__(self):
-        return self.jet_list[0].size(0)
+        return self.dataset_list[0].size(0)
     
     def __getitem__(self, idx):
-        jet, labels = self.jet_list
-        if self.preprocess is not None: 
-            # jet = JetNetPreprocess(method, params)
-            pass
-        return jet[idx], labels[idx]
-
-    def dataloader(self):
-
-        samples = []
-        labels = []
-
+        datasets, labels = self.dataset_list
+        if self.preprocess:
+            datasets = self.apply_preprocessing(datasets)  
+        return datasets[idx], labels[idx]
+         
+    def get_data(self):
+        dataset_list = []
+        label_list = []
         for root, dirs, files in os.walk(self.path):
             for file in files:
                 key = None
                 path = os.path.join(root, file)
+
                 # hdf5 files
                 if file.endswith('.hdf5') or file.endswith('.h5'):
                     with h5py.File(path, 'r') as f:
@@ -120,64 +72,329 @@ class JetNetDataset(Dataset):
                                 for k in self.data_files.keys():
                                     if file in self.data_files[k][0] and key==self.data_files[k][1]:
                                         label = None if self.data_class_labels is None else self.data_class_labels[k]
-                                        data = torch.Tensor(np.array(f[key]))
-                                        data = self.format_data(data)
-                                        data = data[:self.num_jets]
-                                        samples.append(data)
-                                        labels.append(torch.full((data.shape[0],), label))
-        
-        samples = torch.cat(samples, dim=0)
-        labels = torch.cat(labels, dim=0) 
+                                        dataset = torch.Tensor(np.array(f[key]))
+                                        dataset = self.apply_formatting(dataset) 
+                                        dataset_list.append(dataset)
+                                        label_list.append(torch.full((dataset.shape[0],), label))
+                
+                # elif file.endswith('.npy'):
+                #     # TODO 
+                #     raise NotImplementedError('Numpy files not supported yet')
 
-        samples_flat = samples.view(-1, samples.shape[-1])
-        mask = samples_flat[:, -1].bool()
-        self.mean = torch.mean(samples_flat[mask],dim=0)
-        self.std = torch.std(samples_flat[mask],dim=0)
-        self.min,_ = torch.min(samples_flat[mask],dim=0)
-        self.max,_ = torch.max(samples_flat[mask],dim=0)
+        dataset_list = torch.cat(dataset_list, dim=0)
+        label_list = torch.cat(label_list, dim=0) 
+        dataset_list_flat = dataset_list.view(-1, dataset_list.shape[-1])
+        mask = dataset_list_flat[:, -1].bool()
+        sample_mean = torch.mean(dataset_list_flat[mask],dim=0)
+        sample_std = torch.std(dataset_list_flat[mask],dim=0)
+        sample_min,_ = torch.min(dataset_list_flat[mask],dim=0)
+        sample_max,_ = torch.max(dataset_list_flat[mask],dim=0)
+        self.info = (sample_mean, sample_std, sample_min, sample_max)
+        return dataset_list, label_list
 
-        return samples, labels
+    def apply_formatting(self, sample):
+        sample = FormatData(sample,
+                          num_jets=self.num_jets,
+                          num_constituents=self.num_consts,
+                          particle_features=self.particle_features,
+                          clip_negative_pt=self.clip_negative_pt)
+        sample.format()
+        return sample.data
     
-    def data_summary(self):
-        table = []
-        headers = ['Sample Name', 'Filename', 'Extension', 'Key', 'Shape', 'Class Label']
-        for name, filename, key, label in self.jet_list:
-            data = self.load_file(filename, key)
-            filename, ext = os.path.splitext(filename)
-            filename = os.path.basename(filename)
-            table.append([name, filename, ext, key, str(data.shape), label])
-
-        print(tabulate(table, headers=headers, tablefmt='pretty'))  
+    def apply_preprocessing(self, sample):
+        sample = PreprocessData(sample)
+        sample.normalize()
+        sample.logit_tramsform()
+        sample.standardize()    
+        return sample.jet
 
 
-class JetNetPreprocess:
+class FormatData:
 
-    ''' Arguments:
-        - `method` : preprocessing method to apply, default is `None`
-        - `params` : parameters for preprocessing method, default is `None`
+    def __init__(self, 
+                 data: torch.Tensor=None,
+                 num_jets: int=None,
+                 num_constituents: int=None,
+                 particle_features: list=['eta_rel', 'phi_rel', 'pt_rel'],
+                 clip_negative_pt: bool=False
+                ):
         
-        Applies preprocessing methods to data.
-    '''
+        self.data = data
+        self.num_jets = num_jets
+        self.num_consts = num_constituents
+        self.particle_features = particle_features
+        self.clip_negative_pt = clip_negative_pt
+
+    def data_rank(self, n):
+        return len(self.data.shape) == n
+
+    def format(self):
+        if self.data_rank(3):  
+            self.zero_padding()
+            self.get_particle_features()
+            self.clip_neg_pt() 
+        if self.data_rank(2): 
+            # TODO
+            pass
+        self.trim_dataset()
     
-    def __init__(self, method=None, params=None):
+    def zero_padding(self):
+        N, P, D = self.data.shape
+        if P < self.num_consts:
+            zero_rows = torch.zeros(N, self.num_consts - P, D)
+            self.data =  torch.cat((self.data, zero_rows), dim=1)
+        else: pass 
+
+    def get_particle_features(self, masked: bool=True): 
+        pf = {}
+        pf['eta_rel'] = self.data[..., 0, None]
+        pf['phi_rel'] = self.data[..., 1, None]
+        pf['pt_rel'] = self.data[..., 2, None]
+        pf['e_rel'] = pf['pt_rel'] * torch.cosh(pf['eta_rel'])
+        pf['log_pt_rel'] = torch.log(pf['pt_rel'])
+        pf['log_e_rel'] = torch.log(pf['e_rel'])
+        pf['R'] = torch.sqrt(pf['eta_rel']**2 + pf['phi_rel']**2)
+        features = [pf[f] for f in self.particle_features]
+        if masked:
+            mask = (self.data[..., 2] != 0).int().unsqueeze(-1) 
+            features += [mask]
+        self.data = torch.cat(features, dim=-1)
+        self.pt_order()        
+
+    def clip_neg_pt(self):
+        data_clip = torch.clone(self.data)    
+        self.data = torch.zeros_like(self.data)
+        self.data[data_clip[..., 2] >= 0.0] = data_clip[data_clip[..., 2] >= 0.0]
+        self.pt_order()
+    
+    def trim_dataset(self):
+        if self.data_rank(3): 
+            self.data = self.data[:self.num_jets, :self.num_consts, :] 
+        if self.data_rank(2): 
+            self.data = self.data[:self.num_conts, :] 
+
+    def pt_order(self):
+        for i, f in enumerate(self.particle_features):
+            if 'pt' in f: 
+                idx = i
+                break
+        if self.data_rank(3): 
+            _ , i = torch.sort(torch.abs(self.data[:, :, idx]), dim=1, descending=True) 
+            self.data = torch.gather(self.data, 1, i.unsqueeze(-1).expand_as(self.data)) 
+        if self.data_rank(2):  
+            _ , i = torch.sort(torch.abs(self.data[:, idx]), dim=1, descending=True) 
+            self.data = torch.gather(self.data, 1, i.unsqueeze(-1).expand_as(self.data)) 
+        
+
+
+class PreprocessData:
+    
+    def __init__(self, 
+                 data: torch.Tensor=None, 
+                 method: dict=None, 
+                 info: tuple=None):
+        
+        self.data = data
+        self.dim_features = self.data.shape[-1] - 1
         self.method = method
-        self.params = params
+        self.mean, self.std, self.max, self.min = info
+        self.mask = self.data[:, -1, None]
+        self.unmask = self.data[:, :self.dim_features]
+        self.jet_features = self.get_jets_features()
+
+    def get_jet_features(self):
+        eta, phi, pt = self.data[:, 0], self.data[:, 1], self.data[:, 2]
+        multiplicity = torch.sum(self.mask, dim=1)
+        e_j  = torch.sum(self.mask * pt * torch.cosh(eta), dim=1)
+        px_j = torch.sum(self.mask * pt * torch.cos(phi), dim=1)
+        py_j = torch.sum(self.mask * pt * torch.sin(phi), dim=1)
+        pz_j = torch.sum(self.mask * pt * torch.sinh(eta), dim=1)
+        pt_j = torch.sqrt(px_j**2 + py_j**2)
+        m_j  = torch.sqrt(e_j**2 - px_j**2 - py_j**2 - pz_j**2)
+        eta_j = torch.asinh(pz_j / pt_j)
+        phi_j = torch.atan2(py_j, px_j)
+        return torch.Tensor((pt_j, eta_j, phi_j, m_j, multiplicity))
         
-    def __call__(self, data):
-        if self.method == 'normalize':
-            return self.normalize(data, self.params['mean'], self.params['std'])
-        elif self.method == 'logit_transform':
-            return self.logit_transform(data, self.params['alpha'])
-        elif self.method == 'standardize':
-            return self.standardize(data, self.params['mean'], self.params['std'])
-        else:
-            raise ValueError(f'Preprocessing method {self.method} not implemented.')
+    def center_jets(data):
+        # TODO
+        # data = data[:, :, [2, 0, 1]]
+        # etas = jet_etas(data)
+        # phis = jet_phis(data)
+        # etas = etas[:, np.newaxis].repeat(repeats=data.shape[1], axis=1)
+        # phis = phis[:, np.newaxis].repeat(repeats=data.shape[1], axis=1)
+        # mask = data[..., 0] > 0  # mask all particles with nonzero pt
+        # data[mask, 1] -= etas[mask]
+        # data[mask, 2] -= phis[mask]
+        # return data[:, :, [1, 2, 0]]
+        pass
+
+    def standardize(self,  sigma: float=1.0):
+        self.jet_unmask = (self.jet_unmask * self.mean) * (1e-8 + sigma / self.std )
+        self.jet_unmask = self.jet_unmask * self.mask
+        self.jet = torch.cat((self.jet_unmask, self.mask), dim=-1)
+
+    def normalize(self):
+        self.jet_unmask = (self.jet_unmask - self.min) / ( self.max - self.min )
+        self.jet_unmask = self.jet_unmask * self.mask
+        self.jet = torch.cat((self.jet_unmask, self.mask), dim=-1)
     
-    def normalize(self, data, mean, std):
-        return (data - mean) / std
+    def logit_tramsform(self, alpha=1e-6):
+        self.jet_unmask = self.logit(self.jet_unmask, alpha=alpha)
+        self.jet_unmask = self.jet_unmask * self.mask
+        self.jet = torch.cat((self.jet_unmask, self.mask), dim=-1)
+
+    def logit(t, alpha=1e-6):
+        x = alpha + (1 - 2 * alpha) * t
+        return torch.log(x/(1-x))
     
-    def logit_transform(self, data, alpha):
-        return torch.log(data / (1 - data) + alpha)
+
+
+
+# class JetNetDataset_Legacy(Dataset):
+
+#     ''' Arguments:
+#         - `dir_path` : path to data files
+#         - `data_files` : dictionary of data files to load, default is `None`
+#         - `data_class_labels` : dictionary of class labels for each data file, default is `None`
+#         - `num_jets`: number of jets to load, default is `None`
+#         - `num_constituents`: number of particle constituents in each jet, default is `150`
+#         - `particle_features`: list of particle features to include in data, default is `['eta_rel', 'phi_rel', 'pt_rel']`
+#         - `preprocess`: dictionary of preprocessing methods to apply to data, default is `None`
+#         - `clip_neg_pt`: clip negative pt values to zero, default is `False`
     
-    def standardize(self, data, mean, std):
-        return (data - mean) / std
+#         Loads and formats data from data files in format `.npy` or `.hdf5`.\\
+#         Adds mask and zero-padding if necessary.\\
+#         Adds class label for each sample if `data_class_labels` is provided.\\
+#         Input data in files should always have shape (`#jets`, `#particles`, `#features`) with feaures: `(eta_rel, phi_rel, pt_rel, ...)`
+        
+#     '''
+    
+#     def __init__(self, 
+#                  dir_path: str=None, 
+#                  data_files: dict=None,
+#                  data_class_labels: dict=None,
+#                  num_jets: int=None,
+#                  num_constituents: int=150,
+#                  preprocess : bool=False,
+#                  particle_features: list=['eta_rel', 'phi_rel', 'pt_rel'],
+#                  clip_neg_pt: bool=False):
+        
+#         self.path = dir_path
+#         self.data_files = data_files
+#         self.data_class_labels = data_class_labels
+#         self.num_jets = num_jets
+#         self.num_consts = num_constituents
+#         self.particle_features = particle_features
+#         self.clip_neg_pt = clip_neg_pt
+#         self.preprocess = preprocess 
+#         self.dataset_list = self.dataloader()
+ 
+#     #...data formatting methods
+
+#     def format_data(self, data):
+#         data = self.zero_padding(data)
+#         data = self.get_particle_features(data)
+#         data = self.clip_negative_pt(data) 
+#         data = self.remove_soft_particles(data)
+#         return data
+
+#     def zero_padding(self, data):
+#         N, P, D = data.shape
+#         if P < self.num_consts:
+#             zero_rows = torch.zeros(N, self.num_consts - P, D)
+#             return torch.cat((data, zero_rows), dim=1) 
+#         else: 
+#             return data
+        
+#     def get_particle_features(self, data, masked=True): 
+#         pf = {}
+#         pf['eta_rel'] = data[..., 0, None]
+#         pf['phi_rel'] = data[..., 1, None]
+#         pf['pt_rel'] = data[..., 2, None]
+#         pf['e_rel'] = pf['pt_rel'] * torch.cosh(pf['eta_rel'])
+#         pf['log_pt_rel'] = torch.log(pf['pt_rel'])
+#         pf['log_e_rel'] = torch.log(pf['e_rel'])
+#         pf['R'] = torch.sqrt(pf['eta_rel']**2 + pf['phi_rel']**2)
+
+#         features = [pf[f] for f in self.particle_features]
+#         if masked:
+#             mask = (data[..., 0] + data[..., 1] + data[..., 2] != 0).int().unsqueeze(-1) 
+#             features += [mask]
+#         data = torch.cat(features, dim=-1)          
+#         return self.pt_order(data)
+    
+#     def clip_negative_pt(self, data):
+#         data_clip = torch.clone(data)    
+#         data = torch.zeros_like(data)
+#         data[data_clip[..., 2] >= 0.0] = data_clip[data_clip[..., 2] >= 0.0]
+#         return self.pt_order(data) if self.clip_neg_pt else data
+    
+#     def remove_soft_particles(self, data):
+#         _, P, _ = data.shape
+#         return  data[:, :self.num_consts, :] if P > self.num_consts else data
+
+#     def pt_order(self, data):
+#         _ , i = torch.sort(torch.abs(data[:, :, 2]), dim=1, descending=True) 
+#         return torch.gather(data, 1, i.unsqueeze(-1).expand_as(data)) 
+        
+#     #...dataset loading methods
+
+#     def __len__(self):
+#         return self.dataset_list[0].size(0)
+    
+#     def __getitem__(self, idx):
+
+#         jets, labels = self.dataset_list
+
+#         if self.preprocess:
+#             jets = JetNetPreprocess(jets)
+
+#             #...get jets 
+
+#             particle_feats.logit_tramsform()
+#             particle_feats.standardize() 
+
+#             #...get jets 
+
+#             jets.normalize()
+#             jets.logit_tramsform()
+#             jets.standardize()    
+
+#         return jet_feat, jets[idx], labels[idx]
+
+#     def dataloader(self):
+#         particle_feats = []
+#         labels = []
+#         for root, dirs, files in os.walk(self.path):
+#             for file in files:
+#                 key = None
+#                 path = os.path.join(root, file)
+
+#                 # hdf5 files
+#                 if file.endswith('.hdf5') or file.endswith('.h5'):
+#                     with h5py.File(path, 'r') as f:
+#                         for key in f.keys():
+#                             if self.data_files is not None:
+#                                 for k in self.data_files.keys():
+#                                     if file in self.data_files[k][0] and key==self.data_files[k][1]:
+#                                         label = None if self.data_class_labels is None else self.data_class_labels[k]
+#                                         data = torch.Tensor(np.array(f[key]))
+#                                         data = self.format_data(data)
+#                                         data = data[:self.num_jets]
+#                                         particle_feats.append(data)
+#                                         labels.append(torch.full((data.shape[0],), label))
+#                 # elif file.endswith('.npy'):
+#                 #     #TODO add support for numpy files
+#                 #     raise NotImplementedError('Numpy files not supported yet.')
+
+#         particle_feats = torch.cat(particle_feats, dim=0)
+#         labels = torch.cat(labels, dim=0) 
+#         particle_feats_flat = particle_feats.view(-1, particle_feats.shape[-1])
+#         mask = particle_feats_flat[:, -1].bool()
+#         sample_mean = torch.mean(particle_feats_flat[mask],dim=0)
+#         sample_std = torch.std(particle_feats_flat[mask],dim=0)
+#         sample_min,_ = torch.min(particle_feats_flat[mask],dim=0)
+#         sample_max,_ = torch.max(particle_feats_flat[mask],dim=0)
+#         self.info = (sample_mean, sample_std, sample_min, sample_max)
+#         return particle_feats, labels
+
