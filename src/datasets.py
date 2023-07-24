@@ -194,12 +194,12 @@ class PreprocessData:
     
     def __init__(self, 
                  data: torch.Tensor=None, 
-                 info: torch.Tensor=None):
+                 stats: torch.Tensor=None):
         
         self.jet = data
         self.dim_features = self.jet.shape[-1] - 1
-        info = torch.reshape(info, (4, -1))
-        self.mean, self.std, self.max, self.min = tuple(info[i][:self.dim_features] for i in range(info.shape[0]))
+        stats = torch.reshape(info, (4, -1))
+        self.mean, self.std, self.min, self.max = tuple(stats[i][:self.dim_features] for i in range(stats.shape[0]))
         self.mask = self.jet[:, -1, None]
         self.jet_unmask = self.jet[:, :self.dim_features]
         # self.jet_features = self.get_jet_features()
@@ -236,14 +236,8 @@ class PreprocessData:
         self.jet = torch.cat((self.jet_unmask, self.mask), dim=-1)
 
     def normalize(self):
-        print(1, self.jet_unmask.shape)
-
         self.jet_unmask = (self.jet_unmask - self.min) / ( self.max - self.min )
-        
-        print(2, self.jet_unmask.shape)
-
         self.jet_unmask = self.jet_unmask * self.mask
-        print(3, self.jet_unmask.shape)
         self.jet = torch.cat((self.jet_unmask, self.mask), dim=-1)
     
     def logit_tramsform(self, alpha=1e-6):
