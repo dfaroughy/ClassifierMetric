@@ -51,14 +51,15 @@ class JetNetDataset(Dataset):
         return self.dataset_list[0].size(0)
     
     def __getitem__(self, idx):
-        datasets, labels = self.dataset_list
+        datasets, labels, stats = self.dataset_list
         if self.preprocess:
-            datasets = self.apply_preprocessing(datasets)  
+            datasets = self.apply_preprocessing(datasets[idx], stats=stats[idx])  
         return datasets[idx], labels[idx]
          
     def get_data(self):
-        dataset_list = []
+        data_list = []
         label_list = []
+        stats_list=[]
         for root, dirs, files in os.walk(self.path):
             for file in files:
                 key = None
@@ -74,23 +75,28 @@ class JetNetDataset(Dataset):
                                         label = None if self.data_class_labels is None else self.data_class_labels[k]
                                         dataset = torch.Tensor(np.array(f[key]))
                                         dataset = self.apply_formatting(dataset) 
-                                        dataset_list.append(dataset)
+                                        data_list.append(dataset)
+                                        stats_list.append(self.summary_stat(dataset).repeat(dataset.shape[0], 1))
                                         label_list.append(torch.full((dataset.shape[0],), label))
                 
                 # elif file.endswith('.npy'):
                 #     # TODO 
                 #     raise NotImplementedError('Numpy files not supported yet')
 
-        dataset_list = torch.cat(dataset_list, dim=0)
-        label_list = torch.cat(label_list, dim=0) 
-        dataset_list_flat = dataset_list.view(-1, dataset_list.shape[-1])
-        mask = dataset_list_flat[:, -1].bool()
-        sample_mean = torch.mean(dataset_list_flat[mask],dim=0)
-        sample_std = torch.std(dataset_list_flat[mask],dim=0)
-        sample_min,_ = torch.min(dataset_list_flat[mask],dim=0)
-        sample_max,_ = torch.max(dataset_list_flat[mask],dim=0)
-        self.info = (sample_mean, sample_std, sample_min, sample_max)
-        return dataset_list, label_list
+        data_tensor = torch.cat(data_list, dim=0)
+        stats_tensor = torch.cat(stats_list, dim=0) 
+        label_tensor = torch.cat(label_list, dim=0) 
+        return data_tensor, label_tensor, stats_tensor
+    
+    def summary_stats(self, data):
+        ''' Returns mean, std, min, max of data'''
+        data_flat = data.view(-1, data.shape[-1])
+        mask = data_flat[:, -1].bool()
+        mean = torch.mean(data_flat[mask],dim=0)
+        std = torch.std(data_flat[mask],dim=0)
+        min,_ = torch.min(data_flat[mask],dim=0)
+        max,_ = torch.max(data_flat[mask],dim=0)
+        return torch.cat((mean, std, min, max), dim=-1)
 
     def apply_formatting(self, sample):
         sample = FormatData(sample,
@@ -101,16 +107,13 @@ class JetNetDataset(Dataset):
         sample.format()
         return sample.data
     
-    def apply_preprocessing(self, sample):
-        sample = PreprocessData(sample)
-        sample.normalize()
-        sample.logit_tramsform()
+    def apply_preprocessing(self, sample, stats):
+        sample = PreprocessData(data=sample, stats=stats)
         sample.standardize()    
         return sample.jet
 
 
 class FormatData:
-
     def __init__(self, 
                  data: torch.Tensor=None,
                  num_jets: int=None,
@@ -191,19 +194,18 @@ class PreprocessData:
     
     def __init__(self, 
                  data: torch.Tensor=None, 
-                 method: dict=None, 
-                 info: tuple=None):
+                 info: torch.Tensor=None):
         
-        self.data = data
-        self.dim_features = self.data.shape[-1] - 1
-        self.method = method
-        self.mean, self.std, self.max, self.min = info
-        self.mask = self.data[:, -1, None]
-        self.unmask = self.data[:, :self.dim_features]
-        self.jet_features = self.get_jets_features()
+        self.jet = data
+        self.dim_features = self.jet.shape[-1] - 1
+        info = torch.reshape(info, (4, -1))
+        self.mean, self.std, self.max, self.min = tuple(info[i][:self.dim_features] for i in range(info.shape[0]))
+        self.mask = self.jet[:, -1, None]
+        self.jet_unmask = self.jet[:, :self.dim_features]
+        # self.jet_features = self.get_jet_features()
 
     def get_jet_features(self):
-        eta, phi, pt = self.data[:, 0], self.data[:, 1], self.data[:, 2]
+        eta, phi, pt = self.jet=t[:, 0], self.jet[:, 1], self.jet[:, 2]
         multiplicity = torch.sum(self.mask, dim=1)
         e_j  = torch.sum(self.mask * pt * torch.cosh(eta), dim=1)
         px_j = torch.sum(self.mask * pt * torch.cos(phi), dim=1)
@@ -234,8 +236,14 @@ class PreprocessData:
         self.jet = torch.cat((self.jet_unmask, self.mask), dim=-1)
 
     def normalize(self):
+        print(1, self.jet_unmask.shape)
+
         self.jet_unmask = (self.jet_unmask - self.min) / ( self.max - self.min )
+        
+        print(2, self.jet_unmask.shape)
+
         self.jet_unmask = self.jet_unmask * self.mask
+        print(3, self.jet_unmask.shape)
         self.jet = torch.cat((self.jet_unmask, self.mask), dim=-1)
     
     def logit_tramsform(self, alpha=1e-6):
