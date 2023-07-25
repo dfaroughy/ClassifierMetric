@@ -2,7 +2,6 @@ import torch
 import numpy as np
 import os
 import h5py
-from tabulate import tabulate
 from torch.utils.data import Dataset
 from src.jetnet import JetNetFeatures
 
@@ -51,15 +50,17 @@ class JetNetDataset(Dataset):
         return self.dataset_list[0].size(0)
     
     def __getitem__(self, idx):
-        datasets, labels, stats = self.dataset_list
+        datasets, labels, summary_stats = self.dataset_list
+        dataset = datasets[idx]  
         if self.preprocess:
-            datasets = self.apply_preprocessing(datasets[idx], stats=stats[idx])  
-        return datasets[idx], labels[idx]
+            i = int(labels[idx])
+            dataset = self.apply_preprocessing(datasets[idx], stats=summary_stats[i])                    
+        return dataset, labels[idx]
          
     def get_data(self):
         data_list = []
         label_list = []
-        stats_list=[]
+        summary_stats_dict = {}
         for root, dirs, files in os.walk(self.path):
             for file in files:
                 key = None
@@ -76,27 +77,25 @@ class JetNetDataset(Dataset):
                                         dataset = torch.Tensor(np.array(f[key]))
                                         dataset = self.apply_formatting(dataset) 
                                         data_list.append(dataset)
-                                        stats_list.append(self.summary_stat(dataset).repeat(dataset.shape[0], 1))
+                                        summary_stats_dict[label] = self.summary_stats(dataset)
                                         label_list.append(torch.full((dataset.shape[0],), label))
-                
+
                 # elif file.endswith('.npy'):
                 #     # TODO 
                 #     raise NotImplementedError('Numpy files not supported yet')
 
         data_tensor = torch.cat(data_list, dim=0)
-        stats_tensor = torch.cat(stats_list, dim=0) 
         label_tensor = torch.cat(label_list, dim=0) 
-        return data_tensor, label_tensor, stats_tensor
+        return data_tensor, label_tensor, summary_stats_dict 
     
     def summary_stats(self, data):
-        ''' Returns mean, std, min, max of data'''
         data_flat = data.view(-1, data.shape[-1])
         mask = data_flat[:, -1].bool()
         mean = torch.mean(data_flat[mask],dim=0)
         std = torch.std(data_flat[mask],dim=0)
-        min,_ = torch.min(data_flat[mask],dim=0)
-        max,_ = torch.max(data_flat[mask],dim=0)
-        return torch.cat((mean, std, min, max), dim=-1)
+        min, _ = torch.min(data_flat[mask],dim=0)
+        max, _ = torch.max(data_flat[mask],dim=0)
+        return (mean[:-1], std[:-1], min[:-1], max[:-1]) # torch.cat((mean, std, min, max), dim=-1)
 
     def apply_formatting(self, sample):
         sample = FormatData(sample,
@@ -109,7 +108,7 @@ class JetNetDataset(Dataset):
     
     def apply_preprocessing(self, sample, stats):
         sample = PreprocessData(data=sample, stats=stats)
-        sample.standardize()    
+        sample.standardize()
         return sample.jet
 
 
@@ -194,18 +193,18 @@ class PreprocessData:
     
     def __init__(self, 
                  data: torch.Tensor=None, 
-                 stats: torch.Tensor=None):
+                 stats: tuple=None):
         
         self.jet = data
         self.dim_features = self.jet.shape[-1] - 1
-        stats = torch.reshape(info, (4, -1))
-        self.mean, self.std, self.min, self.max = tuple(stats[i][:self.dim_features] for i in range(stats.shape[0]))
+        self.mean, self.std, self.min, self.max = stats 
         self.mask = self.jet[:, -1, None]
         self.jet_unmask = self.jet[:, :self.dim_features]
-        # self.jet_features = self.get_jet_features()
+
+        print(3, self.jet.shape, self.jet_unmask.shape)
 
     def get_jet_features(self):
-        eta, phi, pt = self.jet=t[:, 0], self.jet[:, 1], self.jet[:, 2]
+        eta, phi, pt = self.jet[:, 0], self.jet[:, 1], self.jet[:, 2]
         multiplicity = torch.sum(self.mask, dim=1)
         e_j  = torch.sum(self.mask * pt * torch.cosh(eta), dim=1)
         px_j = torch.sum(self.mask * pt * torch.cos(phi), dim=1)
