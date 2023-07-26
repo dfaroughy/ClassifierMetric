@@ -92,15 +92,15 @@ class JetNetDataset(Dataset):
         sample.format()
         return sample.data
     
-    def get_jet_features(self, sample):
-        sample = PreprocessData(data=sample)
-        return sample.jet_features
-
     def apply_preprocessing(self, sample, stats):
         sample = PreprocessData(data=sample, stats=stats)
         sample.center_jets()
         sample.standardize()
         return sample.jet
+    
+    def get_jet_features(self, sample):
+        sample = PreprocessData(data=sample)
+        return sample.jet_features
     
     def summary_stats(self, data):
         data_flat = data.view(-1, data.shape[-1])
