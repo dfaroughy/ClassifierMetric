@@ -14,7 +14,7 @@ class MultiClassifierTest:
                  classifier, 
                  samples: dict=None,
                  truth_label: int=0,
-                 split_fractions: dict=None,
+                 split_fractions: tuple=None,
                  epochs: int=100, 
                  lr: float=0.001, 
                  early_stopping : int=10,
@@ -42,37 +42,34 @@ class MultiClassifierTest:
         self.epochs = epochs
 
 
-    def train_val_test_split(self, dataset, shuffle=False):
+    def train_val_test_split(self, dataset, train_frac, valid_frac, shuffle=False):
         assert sum(self.split_fractions) - 1.0 < 1e-3, "Split fractions do not sum to 1!"
-
-        #...Determine the sizes of each split
         total_size = len(dataset)
-        train_size = int(total_size * self.split_fractions[0])
-        valid_size = int(total_size * self.split_fractions[1])
-
-        #...Generate shuffled indices
-        idx = torch.randperm(total_size) if shuffle else torch.arange(total_size)
-
-        #...Split indices based on split sizes
-        idx_train = indices[:train_size]
-        idx_valid = indices[train_size : train_size + valid_size]
-        idx_test = indices[train_size + valid_size :]
-
+        train_size = int(total_size * train_frac)
+        valid_size = int(total_size * valid_frac)
+        
+        #...define splitting indices
+        
+        idx = torch.randperm(total_size) if shuffle else torch.arange(total_size)        
+        idx_train = idx[:train_size]
+        idx_valid = idx[train_size : train_size + valid_size]
+        idx_test = idx[train_size + valid_size :]
+        
         #...Create Subset for each split
+        
         train_set = Subset(dataset, idx_train)
         valid_set = Subset(dataset, idx_valid)
         test_set = Subset(dataset, idx_test)
 
         return train_set, valid_set, test_set
 
-    def DataLoader(self, test_size, batch_size):
-        train, test  = train_test_split(self.data, test_size=test_size, random_state=self.seed)
-        self.train_sample = DataLoader(dataset=torch.Tensor(train), batch_size=batch_size, shuffle=True)
-        self.test_sample = DataLoader(dataset=torch.Tensor(test),  batch_size=batch_size, shuffle=False)
-    
-    
+    def DataLoader(self, batch_size):
+        train, valid, test  = self.train_val_test_split(self.models_sample, train_frac=self.split_fractions[0], valid_frac=self.split_fractions[1], shuffle=True)
+        self.train_loader = DataLoader(dataset=train, batch_size=batch_size, shuffle=True)
+        self.valid_loader = DataLoader(dataset=valid,  batch_size=batch_size, shuffle=False)
+        self.test_loader = DataLoader(dataset=test,  batch_size=batch_size, shuffle=False)
+
     def train(self):
-        
         train = Train_Step(loss_fn=self.model.loss)
         valid = Validation_Step(loss_fn=self.model.loss)
         optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)  
