@@ -1,5 +1,4 @@
 import torch
-from torch import Tensor
 import torch.nn as nn
 import numpy as np
 from sklearn.model_selection import train_test_split
@@ -13,8 +12,7 @@ class MultiClassifierTest:
 
     def __init__(self, 
                  classifier, 
-                 truth_samples: JetNetDataset=None,
-                 model_samples: JetNetDataset=None,
+                 samples: dict=None,
                  split_fractions: dict=None,
                  epochs: int=100, 
                  lr: float=0.001, 
@@ -23,8 +21,7 @@ class MultiClassifierTest:
                  seed=12345):
     
         super(MultiClassifierTest, self).__init__()
-        self.truth_samples = truth_samples
-        self.model_samples = model_samples
+        self.samples = samples
         self.split_fractions = split_fractions
         self.model = classifier
         self.workdir = workdir
@@ -34,11 +31,12 @@ class MultiClassifierTest:
         self.epochs = epochs
 
 
-    def split_data(self, sample):
-        train_frac, valid_frac = self.split_fractions[0], self.split_fractions[1]
-        train_idx = int(train_frac * len(self.sample))
+    def split_data(self, kind: str=None):
+        sample = self.samples[kind]
+        train_frac, valid_frac = self.split_fractions[kind][0], self.split_fractions[kind][1]
+        train_idx = int(train_frac * len(sample))
         valid_idx = int((train_frac + valid_frac) * len(sample))
-        train, valid, test = np.split(self.sample.numpy(), indices_or_sections=[train_idx, valid_idx])
+        train, valid, test = np.split(sample.numpy(), indices_or_sections=[train_idx, valid_idx])
         return torch.Tensor(train), torch.Tensor(valid), torch.Tensor(test)
     
 
@@ -87,7 +85,7 @@ class Train_Step(nn.Module):
         self.print_epoch = 5
         self.losses = []
 
-    def update(self, data: Tensor, optimizer):
+    def update(self, data: torch.Tensor, optimizer):
         self.loss = 0
         self.epoch += 1
 
@@ -121,7 +119,7 @@ class Validation_Step(nn.Module):
         self.losses = []
 
     @torch.no_grad()
-    def update(self, data: Tensor):
+    def update(self, data: torch.Tensor):
         self.loss = 0
         self.epoch += 1
 

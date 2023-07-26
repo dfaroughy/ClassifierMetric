@@ -48,13 +48,13 @@ Data_train, Data_eval = {}, {}
 #...Load data
 
 datasets = JetNetDataset(dir_path='data/', 
-                              data_files=TrainConfig.datafiles,
-                              data_class_labels=TrainConfig.labels,
-                              num_jets=TrainConfig.size,
-                              num_constituents=150, 
-                              clip_neg_pt=True,
-                              particle_features=['eta_rel', 'phi_rel', 'pt_rel', 'R', 'e_rel']
-                              )
+                        data_files=TrainConfig.datafiles,
+                        data_class_labels=TrainConfig.labels,
+                        num_jets=TrainConfig.size,
+                        num_constituents=150, 
+                        clip_neg_pt=True,
+                        particle_features=['eta_rel', 'phi_rel', 'pt_rel', 'R', 'e_rel']
+                        )
 
 
 #...Train classifier for discriminating between Model 1 and 2
