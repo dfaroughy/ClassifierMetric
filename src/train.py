@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 from sklearn.model_selection import train_test_split
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 from tqdm.auto import tqdm
 
 from src.plots import plot_loss
@@ -13,6 +13,7 @@ class MultiClassifierTest:
     def __init__(self, 
                  classifier, 
                  samples: dict=None,
+                 truth_label: int=0,
                  split_fractions: dict=None,
                  epochs: int=100, 
                  lr: float=0.001, 
@@ -21,7 +22,17 @@ class MultiClassifierTest:
                  seed=12345):
     
         super(MultiClassifierTest, self).__init__()
+
+        #...get samples
+
         self.samples = samples
+        labels = [item['label'] for item in samples]
+        idx_truth = [i for i, label in enumerate(labels) if label == truth_label]
+        idx_models = [i for i, label in enumerate(labels) if label != truth_label]
+        self.truth_sample = Subset(self.samples, idx_truth)
+        self.models_sample = Subset(self.samples, idx_models)
+
+        
         self.split_fractions = split_fractions
         self.model = classifier
         self.workdir = workdir
@@ -31,14 +42,28 @@ class MultiClassifierTest:
         self.epochs = epochs
 
 
-    def split_data(self, kind: str=None):
-        sample = self.samples[kind]
-        train_frac, valid_frac = self.split_fractions[kind][0], self.split_fractions[kind][1]
-        train_idx = int(train_frac * len(sample))
-        valid_idx = int((train_frac + valid_frac) * len(sample))
-        train, valid, test = np.split(sample.numpy(), indices_or_sections=[train_idx, valid_idx])
-        return torch.Tensor(train), torch.Tensor(valid), torch.Tensor(test)
-    
+    def train_val_test_split(self, dataset, shuffle=False):
+        assert sum(self.split_fractions) - 1.0 < 1e-3, "Split fractions do not sum to 1!"
+
+        #...Determine the sizes of each split
+        total_size = len(dataset)
+        train_size = int(total_size * self.split_fractions[0])
+        valid_size = int(total_size * self.split_fractions[1])
+
+        #...Generate shuffled indices
+        idx = torch.randperm(total_size) if shuffle else torch.arange(total_size)
+
+        #...Split indices based on split sizes
+        idx_train = indices[:train_size]
+        idx_valid = indices[train_size : train_size + valid_size]
+        idx_test = indices[train_size + valid_size :]
+
+        #...Create Subset for each split
+        train_set = Subset(dataset, idx_train)
+        valid_set = Subset(dataset, idx_valid)
+        test_set = Subset(dataset, idx_test)
+
+        return train_set, valid_set, test_set
 
     def DataLoader(self, test_size, batch_size):
         train, test  = train_test_split(self.data, test_size=test_size, random_state=self.seed)
