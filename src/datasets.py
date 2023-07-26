@@ -18,22 +18,20 @@ class JetNetDataset(Dataset):
         - `particle_features`: list of particle features to include in data, default is `['eta_rel', 'phi_rel', 'pt_rel']`
         - `preprocess`: dictionary of preprocessing methods to apply to data, default is `None`
         - `clip_neg_pt`: clip negative pt values to zero, default is `False`
-    
         Loads and formats data from data files in format `.npy` or `.hdf5`.\\
         Adds mask and zero-padding if necessary.\\
         Adds class label for each sample if `data_class_labels` is provided.\\
         Input data in files should always have shape (`#jets`, `#particles`, `#features`) with feaures: `(eta_rel, phi_rel, pt_rel, ...)`
-        
     '''
     
     def __init__(self, 
                  dir_path: str=None, 
                  data_files: dict=None,
                  data_class_labels: dict=None,
-                 num_jets: int=None,
-                 num_constituents: int=150,
-                 preprocess : bool=False,
                  particle_features: list=['eta_rel', 'phi_rel', 'pt_rel'],
+                 preprocess : bool=False,
+                 num_jets: int=100000,
+                 num_constituents: int=150,
                  clip_negative_pt: bool=False):
         
         self.path = dir_path
@@ -44,59 +42,43 @@ class JetNetDataset(Dataset):
         self.particle_features = particle_features
         self.clip_negative_pt = clip_negative_pt
         self.preprocess = preprocess 
+        self.summary_statistics = {}
         self.dataset_list = self.get_data()
- 
+    
     def __len__(self):
         return self.dataset_list[0].size(0)
     
     def __getitem__(self, idx):
-        datasets, labels, summary_stats = self.dataset_list
+        datasets, labels = self.dataset_list
         dataset = datasets[idx]  
         if self.preprocess:
             i = int(labels[idx])
-            dataset = self.apply_preprocessing(datasets[idx], stats=summary_stats[i])                    
+            dataset = self.apply_preprocessing(datasets[idx], stats=self.summary_statistics[i])                    
         return dataset, labels[idx]
          
     def get_data(self):
         data_list = []
         label_list = []
-        summary_stats_dict = {}
         for root, dirs, files in os.walk(self.path):
             for file in files:
                 key = None
                 path = os.path.join(root, file)
-
-                # hdf5 files
                 if file.endswith('.hdf5') or file.endswith('.h5'):
                     with h5py.File(path, 'r') as f:
                         for key in f.keys():
                             if self.data_files is not None:
                                 for k in self.data_files.keys():
                                     if file in self.data_files[k][0] and key==self.data_files[k][1]:
-                                        label = None if self.data_class_labels is None else self.data_class_labels[k]
+                                        label = self.data_class_labels[k] if self.data_class_labels is not None else None
                                         dataset = torch.Tensor(np.array(f[key]))
-                                        dataset = self.apply_formatting(dataset) 
+                                        dataset = self.apply_formatting(dataset)
+                                        self.summary_statistics[label] = self.summary_stats(dataset)
                                         data_list.append(dataset)
-                                        summary_stats_dict[label] = self.summary_stats(dataset)
                                         label_list.append(torch.full((dataset.shape[0],), label))
-
-                # elif file.endswith('.npy'):
-                #     # TODO 
-                #     raise NotImplementedError('Numpy files not supported yet')
-
         data_tensor = torch.cat(data_list, dim=0)
         label_tensor = torch.cat(label_list, dim=0) 
-        return data_tensor, label_tensor, summary_stats_dict 
+        return data_tensor, label_tensor
     
-    def summary_stats(self, data):
-        data_flat = data.view(-1, data.shape[-1])
-        mask = data_flat[:, -1].bool()
-        mean = torch.mean(data_flat[mask],dim=0)
-        std = torch.std(data_flat[mask],dim=0)
-        min, _ = torch.min(data_flat[mask],dim=0)
-        max, _ = torch.max(data_flat[mask],dim=0)
-        return (mean[:-1], std[:-1], min[:-1], max[:-1]) # torch.cat((mean, std, min, max), dim=-1)
-
     def apply_formatting(self, sample):
         sample = FormatData(sample,
                           num_jets=self.num_jets,
@@ -110,8 +92,17 @@ class JetNetDataset(Dataset):
         sample = PreprocessData(data=sample, stats=stats)
         sample.standardize()
         return sample.jet
-
-
+    
+    def summary_stats(self, data):
+        data_flat = data.view(-1, data.shape[-1])
+        mask = data_flat[:, -1].bool()
+        mean = torch.mean(data_flat[mask],dim=0)
+        std = torch.std(data_flat[mask],dim=0)
+        min, _ = torch.min(data_flat[mask],dim=0)
+        max, _ = torch.max(data_flat[mask],dim=0)
+        mean, std, min, max = mean[:-1], std[:-1], min[:-1], max[:-1]
+        return (mean, std, min, max)
+    
 class FormatData:
     def __init__(self, 
                  data: torch.Tensor=None,
@@ -134,7 +125,7 @@ class FormatData:
         if self.data_rank(3):  
             self.zero_padding()
             self.get_particle_features()
-            self.clip_neg_pt() 
+            self.remove_neg_pt() 
         if self.data_rank(2): 
             # TODO
             pass
@@ -163,7 +154,7 @@ class FormatData:
         self.data = torch.cat(features, dim=-1)
         self.pt_order()        
 
-    def clip_neg_pt(self):
+    def remove_neg_pt(self):
         data_clip = torch.clone(self.data)    
         self.data = torch.zeros_like(self.data)
         self.data[data_clip[..., 2] >= 0.0] = data_clip[data_clip[..., 2] >= 0.0]
@@ -186,11 +177,8 @@ class FormatData:
         if self.data_rank(2):  
             _ , i = torch.sort(torch.abs(self.data[:, idx]), dim=1, descending=True) 
             self.data = torch.gather(self.data, 1, i.unsqueeze(-1).expand_as(self.data)) 
-        
-
 
 class PreprocessData:
-    
     def __init__(self, 
                  data: torch.Tensor=None, 
                  stats: tuple=None):
