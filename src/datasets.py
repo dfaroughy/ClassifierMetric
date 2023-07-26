@@ -43,17 +43,23 @@ class JetNetDataset(Dataset):
         self.summary_statistics = {}
         self.dataset_list = self.get_data()
     
-    def __len__(self):
-        return self.dataset_list[0].size(0)
-    
     def __getitem__(self, idx):
+        output = {}
         datasets, labels = self.dataset_list
         dataset = datasets[idx]  
+        jet = self.get_jet_features(dataset)
         if self.preprocess:
             i = int(labels[idx])
-            dataset = self.apply_preprocessing(datasets[idx], stats=self.summary_statistics[i])                    
-        return dataset, labels[idx]
-         
+            dataset = self.apply_preprocessing(datasets[idx], stats=self.summary_statistics[i])  
+        output['label'] = labels[idx]
+        output['particle_features'] = dataset[:, :-1]
+        output['mask'] = dataset[:, -1]
+        output['jet_features'] = jet
+        return output
+
+    def __len__(self):
+        return self.dataset_list[0].size(0)
+
     def get_data(self):
         data_list = []
         label_list = []
@@ -86,8 +92,13 @@ class JetNetDataset(Dataset):
         sample.format()
         return sample.data
     
+    def get_jet_features(self, sample):
+        sample = PreprocessData(data=sample)
+        return sample.jet_features
+
     def apply_preprocessing(self, sample, stats):
         sample = PreprocessData(data=sample, stats=stats)
+        sample.center_jets()
         sample.standardize()
         return sample.jet
     
@@ -137,7 +148,6 @@ class FormatData:
         if self.data_rank(2): 
             # TODO
             pass
-        
     
     def zero_padding(self):
         N, P, D = self.data.shape
@@ -207,37 +217,35 @@ class PreprocessData:
         
         self.jet = data
         self.dim_features = self.jet.shape[-1] - 1
-        self.mean, self.std, self.min, self.max = stats 
+        if stats is not None:
+            self.mean, self.std, self.min, self.max = stats 
         self.mask = self.jet[:, -1, None]
         self.jet_unmask = self.jet[:, :self.dim_features]
-
-        print(3, self.jet.shape, self.jet_unmask.shape)
-
+        self.jet_features = self.get_jet_features()
+    
     def get_jet_features(self):
+        mask = self.mask.squeeze(-1)
         eta, phi, pt = self.jet[:, 0], self.jet[:, 1], self.jet[:, 2]
-        multiplicity = torch.sum(self.mask, dim=1)
-        e_j  = torch.sum(self.mask * pt * torch.cosh(eta), dim=1)
-        px_j = torch.sum(self.mask * pt * torch.cos(phi), dim=1)
-        py_j = torch.sum(self.mask * pt * torch.sin(phi), dim=1)
-        pz_j = torch.sum(self.mask * pt * torch.sinh(eta), dim=1)
+        multiplicity = torch.sum(mask, dim=0)
+        e_j  = torch.sum(mask * pt * torch.cosh(eta), dim=0)
+        px_j = torch.sum(mask * pt * torch.cos(phi), dim=0)
+        py_j = torch.sum(mask * pt * torch.sin(phi), dim=0)
+        pz_j = torch.sum(mask * pt * torch.sinh(eta), dim=0)
         pt_j = torch.sqrt(px_j**2 + py_j**2)
         m_j  = torch.sqrt(e_j**2 - px_j**2 - py_j**2 - pz_j**2)
         eta_j = torch.asinh(pz_j / pt_j)
         phi_j = torch.atan2(py_j, px_j)
         return torch.Tensor((pt_j, eta_j, phi_j, m_j, multiplicity))
         
-    def center_jets(data):
-        # TODO
-        # jet_feats= self.get_jet_features()
-        # etas = jet_feats[:, 1]
-        # phis = jet_feats[:, 2]
-        # etas = etas[:, np.newaxis].repeat(repeats=data.shape[1], axis=1)
-        # phis = phis[:, np.newaxis].repeat(repeats=data.shape[1], axis=1)
-        # mask = data[..., 0] > 0  # mask all particles with nonzero pt
-        # data[mask, 1] -= etas[mask]
-        # data[mask, 2] -= phis[mask]
-        # return data[:, :, [1, 2, 0]]
-        pass
+    def center_jets(self):
+        N = self.jet.shape[0]
+        jet_coords = self.jet_features[1:3] # jet (eta, phi)
+        jet_coords = jet_coords.repeat(N, 1) * self.mask
+        zeros = torch.zeros((N, self.dim_features - 2))
+        jet_coords = torch.cat((jet_coords, zeros), dim=1)
+        self.jet_unmask -= jet_coords 
+        self.jet_unmask -= jet_coords 
+        self.jet = torch.cat((self.jet_unmask, self.mask), dim=-1)
 
     def standardize(self,  sigma: float=1.0):
         self.jet_unmask = (self.jet_unmask * self.mean) * (1e-8 + sigma / self.std )
