@@ -1,7 +1,7 @@
 # Model config card for the Classifier
 
 class BaseConfig:
-    device : str = 'cuda:0'
+    device : str = 'cpu'
     seed : int = 12345
 
 
