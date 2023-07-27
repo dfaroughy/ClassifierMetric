@@ -18,7 +18,7 @@ class TrainConfig:
     device = 'cpu'
     split_fractions = [0.4, 0.3, 0.3]  # train / val / test 
     size = 5000 
-    batch_size  = 400
+    batch_size  = 200
     epochs = 5   
     early_stopping  = 30     
     lr  = 0.0005
