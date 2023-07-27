@@ -13,20 +13,17 @@ The classifier is trained on the generated data from each model and evaluated on
 
 from src.architectures import DeepSets as deepsets
 from cards.models import DeepSetsConfig as config
-
 classifier_model = deepsets(model_config=config)
+
+# from src.architectures import MLP as mlp
+# from cards.models import MLPConfig as config
+# classifier_model = mlp(model_config=config)
 
 ###################################################
 
 #...Create working folders
 
-directory = '{}.{}.{}.hdims.{}x{}.layers.{}.batch'.format(config.jet_type,
-                                                         config.name, 
-                                                         config.dim_hidden, 
-                                                         config.num_layers_1, 
-                                                         config.num_layers_2, 
-                                                         config.batch_size)
-
+directory = '{}.{}.{}feats.{}class.{}batch.{}lr'.format(config.jet_type, config.name, config.dim_input, config.dim_output, config.batch_size, config.lr)
 config.workdir = make_dir(directory, sub_dirs=['results'], overwrite=False)
 save_configs(configs=[config], filename=config.workdir+'/configs.json')
 

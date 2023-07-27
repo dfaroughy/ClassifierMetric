@@ -18,6 +18,8 @@ class MLP(nn.Module):
     ''' Wrapper class for the MLP architecture'''
     def __init__(self, model_config):
         super(MLP, self).__init__()
+        self.dim_features = model_config.dim_input
+        self.device = model_config.device
         self.wrapper = _MLP(dim=model_config.dim_input, 
                             num_classes=model_config.dim_output,
                             dim_hidden=model_config.dim_hidden, 
@@ -27,7 +29,7 @@ class MLP(nn.Module):
         return self.wrapper.forward(x)
     
     def loss(self, batch):
-        data = batch['particle_features'].to(self.device)
+        data = batch['jet_features'].to(self.device)
         labels = batch['label'].to(self.device)
         output = self.forward(data)
         criterion = nn.CrossEntropyLoss()
@@ -36,7 +38,7 @@ class MLP(nn.Module):
 
     @torch.no_grad()
     def predict(self, batch): 
-        data = batch['particle_features'].to(self.device)
+        data = batch['jet_features'].to(self.device)
         logits = self.forward(data)
         probs = torch.nn.functional.softmax(logits, dim=1)
         return probs 
@@ -82,7 +84,7 @@ class _MLP(nn.Module):
                 num_classes, 
                 device='cpu'):
 
-        super(MLP, self).__init__()
+        super(_MLP, self).__init__()
 
         self.device = device
         self.layers = [nn.Linear(dim, dim_hidden), nn.LeakyReLU()] + [nn.Linear(dim_hidden, dim_hidden), nn.LeakyReLU()] * (num_layers - 1) + [nn.Linear(dim_hidden, num_classes), nn.LeakyReLU()]
@@ -112,7 +114,7 @@ class _DeepSets(nn.Module):
         self.phi = nn.Sequential(*layers_1).to(device)
         self.rho = nn.Sequential(*layers_2).to(device)
 
-    def forward(self, x): # x=(eta, phi, pt_rel, R)
+    def forward(self, x): 
         h = self.phi(x)                                                      # shape: (N, m, hidden_dim)
         h = torch.cat([torch.sum(h, dim=1), torch.mean(h, dim=1)], dim=1)    # sum and mean pooling shape: (N, hidden_dim)
         h = self.rho(h)                                                      # shape: (N, output_dim)

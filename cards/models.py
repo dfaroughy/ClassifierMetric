@@ -3,7 +3,7 @@ from cards.configs import DataConfig, TrainConfig
 class MLPConfig(TrainConfig, DataConfig):
     
     name = 'MLP'
-    dim_input = len(DataConfig.features)
+    dim_input = 5
     dim_output = len(DataConfig.datasets) - 1
     dim_hidden = 128 
     num_layers = 3 
