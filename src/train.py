@@ -13,7 +13,7 @@ class MultiClassifierTest:
     def __init__(self, 
                  classifier, 
                  samples: dict=None,
-                 truth_label: int=0,
+                 truth_label: int=None,
                  split_fractions: tuple=None,
                  epochs: int=100, 
                  lr: float=0.001, 
@@ -27,6 +27,7 @@ class MultiClassifierTest:
 
         self.samples = samples
         labels = [item['label'] for item in samples]
+        truth_label = np.max(labels) if truth_label is None else truth_label
         idx_truth = [i for i, label in enumerate(labels) if label == truth_label]
         idx_models = [i for i, label in enumerate(labels) if label != truth_label]
         self.truth_sample = Subset(self.samples, idx_truth)
@@ -80,8 +81,8 @@ class MultiClassifierTest:
 
         for epoch in tqdm(range(self.epochs), desc="epochs"):
 
-            train.update(data=self.train_sample, optimizer=optimizer)       
-            valid.update(data=self.test_sample)
+            train.update(data=self.train_loader, optimizer=optimizer)       
+            valid.update(data=self.valid_loader)
             scheduler.step() 
 
             if valid.stop(save_best=self.model,
@@ -89,8 +90,8 @@ class MultiClassifierTest:
                           workdir=self.workdir): 
                 print("INFO: early stopping triggered! Reached maximum patience at {} epochs".format(epoch))
                 break
-            if epoch % 5 == 1: plot_loss(train, valid, workdir=self.workdir, overwrite=True)
-        plot_loss(train, valid, workdir=self.workdir, overwrite=True)
+            if epoch % 5 == 1: plot_loss(train, valid, workdir=self.workdir)
+        plot_loss(train, valid, workdir=self.workdir)
 
     def test(self):
         # TODO

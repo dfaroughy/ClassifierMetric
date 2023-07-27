@@ -10,7 +10,7 @@ class JetNetDataset(Dataset):
     ''' Arguments:
         - `dir_path` : path to data files
         - `data_files` : dictionary of data files to load, default is `None`
-        - `data_class_labels` : dictionary of class labels for each data file, default is `None`
+        - `class_labels` : dictionary of class labels for each data file, default is `None`
         - `num_jets`: number of jets to load, default is `None`
         - `num_constituents`: number of particle constituents in each jet, default is `150`
         - `particle_features`: list of particle features to include in data, default is `['eta_rel', 'phi_rel', 'pt_rel']`
@@ -18,14 +18,14 @@ class JetNetDataset(Dataset):
         - `clip_neg_pt`: clip negative pt values to zero, default is `False`
         Loads and formats data from data files in format `.hdf5`.\\
         Adds mask and zero-padding.\\
-        Adds class label for each sample via `data_class_labels`.\\
+        Adds class label for each sample via `class_labels`.\\
         Input data in files should always have shape (`#jets`, `#particles`, `#features`) with feaures: `(eta_rel, phi_rel, pt_rel, ...)`
     '''
     
     def __init__(self, 
                  dir_path: str=None, 
-                 data_files: dict=None,
-                 data_class_labels: dict=None,
+                 datasets: dict=None,
+                 class_labels: dict=None,
                  particle_features: list=['eta_rel', 'phi_rel', 'pt_rel'],
                  preprocess : list=['standardize'],
                  num_jets: int=100000,
@@ -33,8 +33,8 @@ class JetNetDataset(Dataset):
                  remove_negative_pt: bool=False):
         
         self.path = dir_path
-        self.data_files = data_files
-        self.data_class_labels = data_class_labels
+        self.datasets = datasets
+        self.class_labels = class_labels
         self.num_jets = num_jets
         self.num_consts = num_constituents
         self.particle_features = particle_features
@@ -70,10 +70,10 @@ class JetNetDataset(Dataset):
                 if file.endswith('.hdf5') or file.endswith('.h5'):
                     with h5py.File(path, 'r') as f:
                         for key in f.keys():
-                            if self.data_files is not None:
-                                for k in self.data_files.keys():
-                                    if file in self.data_files[k][0] and key==self.data_files[k][1]:
-                                        label = self.data_class_labels[k] if self.data_class_labels is not None else None
+                            if self.datasets is not None:
+                                for k in self.datasets.keys():
+                                    if file in self.datasets[k][0] and key==self.datasets[k][1]:
+                                        label = self.class_labels[k] if self.class_labels is not None else None
                                         dataset = torch.Tensor(np.array(f[key]))
                                         dataset = self.apply_formatting(dataset)
                                         self.summary_statistics[label] = self.summary_stats(dataset)
@@ -204,10 +204,11 @@ class PreprocessData:
         - `stats`: tuple of summary statistics of the dataset (`mean`, `std`, `min`, `max`)
 
         preprocessing options are the following:
-        - center jets (TODO)
+        - center jets
         - standardize
         - normalize
         - logit transform
+        
        The method `get_jet_features` computes from the particle constituents the main jet-level features (pt, eta, phi, mass, multuiplicity)
     '''
 
