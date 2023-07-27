@@ -1,11 +1,6 @@
-# Model config card for the Classifier
+from ConfigCards import DataConfig, TrainConfig
 
-class BaseConfig:
-    device : str = 'cpu'
-    seed : int = 12345
-
-
-class MLPConfig(BaseConfig):
+class MLPConfig(DataConfig, TrainConfig):
     
     name : str = 'MLP'
     dim_input : int = 4
@@ -13,7 +8,7 @@ class MLPConfig(BaseConfig):
     dim_hidden : int = 128 
     num_layers : int = 3 
 
-class DeepSetsConfig(BaseConfig):
+class DeepSetsConfig(DataConfig, TrainConfig):
 
     name  = 'DeepSets'
     dim_input : int = 5
@@ -22,7 +17,7 @@ class DeepSetsConfig(BaseConfig):
     num_layers_1 : int = 2
     num_layers_2 : int = 2
 
-class ParticleNetConfig(BaseConfig):
+class ParticleNetConfig(DataConfig, TrainConfig):
 
     name  = 'ParticleNet'
     dim_input : int = 2
