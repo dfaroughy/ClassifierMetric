@@ -21,7 +21,7 @@ class TrainConfig:
     split_fractions = [0.4, 0.3, 0.3]  # train / val / test 
     size = 200000 
     batch_size  = 1000
-    epochs  = 5   
+    epochs = 5   
     early_stopping  = 30     
     lr  = 0.0005
     seed = 12345
