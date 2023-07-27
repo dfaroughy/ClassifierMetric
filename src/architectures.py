@@ -12,7 +12,7 @@ Possible classifier architectures:
 '''
 #################################
 
-#...wrapper classes
+#...wrappers
 
 class MLP(nn.Module):
     ''' Wrapper class for the MLP architecture'''
@@ -25,11 +25,21 @@ class MLP(nn.Module):
                             device=model_config.device)
     def forward(self, x):
         return self.wrapper.forward(x)
+    
     def loss(self, batch):
-        return self.wrapper.loss(batch)
-    @torch.no_grad() 
-    def probability(self, x, batch_size):
-        return self.wrapper.probability(x)
+        data = batch['particle_features'].to(self.device)
+        labels = batch['label'].to(self.device)
+        output = self.forward(data)
+        criterion = nn.CrossEntropyLoss()
+        loss = criterion(output, labels)
+        return loss
+
+    @torch.no_grad()
+    def predict(self, batch): 
+        data = batch['particle_features'].to(self.device)
+        logits = self.forward(data)
+        probs = torch.nn.functional.softmax(logits, dim=1)
+        return probs 
 
 class DeepSets(nn.Module):
     ''' Wrapper class for the Deep Sets architecture'''
@@ -61,9 +71,6 @@ class DeepSets(nn.Module):
         probs = torch.nn.functional.softmax(logits, dim=1)
         return probs 
 
-
-
-
 #...architecture classes
 
 class _MLP(nn.Module):
@@ -84,26 +91,6 @@ class _MLP(nn.Module):
     def forward(self, x):
         return self.net(x)
     
-    def loss(self, batch):
-        batch = batch.to(self.device)
-        features, labels = batch[..., :-1], batch[..., -1].long()
-        criterion = nn.CrossEntropyLoss()
-        output = self.net(features)
-        loss = criterion(output, labels)
-        return loss
-    
-    @torch.no_grad()
-    def probability(self, x, batch_size=1024): 
-        num_batches = x.shape[0] // batch_size
-        batches = torch.chunk(x, num_batches, dim=0)
-        probs = []
-        for batch in batches:
-            batch  = batch[..., :self.dim].to(self.device)
-            logits = self.forward(batch)
-            batch_prob = torch.nn.functional.softmax(logits, dim=1)
-            probs.append(batch_prob)
-        return torch.cat(probs, dim=0).detach().cpu()  
-
 
 class _DeepSets(nn.Module):
 
