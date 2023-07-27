@@ -45,13 +45,23 @@ class DeepSets(nn.Module):
                                 device=model_config.device)
     def forward(self, x):
         return self.wrapper.forward(x)
+    
     def loss(self, batch):
-        batch = batch.to(self.device)
-        features, labels = batch[..., :self.dim_features], batch[..., -1].long()[:,0]
-        output = self.forward(features)
+        data = batch['particle_features'].to(self.device)
+        labels = batch['label'].to(self.device)
+        output = self.forward(data)
         criterion = nn.CrossEntropyLoss()
         loss = criterion(output, labels)
         return loss
+    
+    # def loss(self, batch):
+    #     batch = batch.to(self.device)
+    #     features, labels = batch[..., :self.dim_features], batch[..., -1].long()[:,0]
+    #     output = self.forward(features)
+    #     criterion = nn.CrossEntropyLoss()
+    #     loss = criterion(output, labels)
+    #     return loss
+
     @torch.no_grad()
     def probability(self, x, batch_size=1024): 
         num_batches = x.shape[0] // batch_size
