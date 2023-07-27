@@ -1,11 +1,7 @@
-import torch
-import numpy as np
-import h5py
-
 from src.utils import make_dir, save_configs, save_data
 from src.plots import plot_class_score
 from src.datasets import JetNetDataset
-from src.train import MultiClassifierTest
+from src.train import ModelClassifierTest
 
 ''' 
 Trains a classifier to distinguish between two models based on particle-level features.
@@ -17,10 +13,10 @@ TODO fix ParticleNet
 '''
 
 ###################################################
-#...Import model and configuration cards
+#...Import model and load configuration cards
 
-from cards.models import DeepSetsConfig as config
 from src.architectures import DeepSets as deepsets
+from cards.models import DeepSetsConfig as config
 
 classifier_model = deepsets(model_config=config)
 
@@ -50,8 +46,8 @@ datasets = JetNetDataset(dir_path = 'data/',
 
 #...Train classifier for discriminating between Modelss
 
-classifier = MultiClassifierTest(classifier = classifier_model, 
-                                samples = datasets,
+classifier = ModelClassifierTest(classifier = classifier_model, 
+                                datasets = datasets,
                                 split_fractions = config.split_fractions,
                                 epochs = config.epochs, 
                                 lr = config.lr, 
@@ -59,8 +55,9 @@ classifier = MultiClassifierTest(classifier = classifier_model,
                                 workdir = config.workdir,
                                 seed = config.seed)
 
-classifier.DataLoader(batch_size=config.batch_size)
+classifier.DataLoaders(batch_size=config.batch_size)
 classifier.train()
+classifier.test()
 
 # #...Evaluate classifier on samples
 
