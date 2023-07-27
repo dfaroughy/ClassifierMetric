@@ -65,7 +65,9 @@ class MultiClassifierTest:
         return train_set, valid_set, test_set
 
     def DataLoader(self, batch_size):
-        train, valid, test  = self.train_val_test_split(self.models_sample, train_frac=self.split_fractions[0], valid_frac=self.split_fractions[1], shuffle=True)
+        print("INFO: train/val/test split of {}% / {}% / {}%".format(self.split_fractions[0]*100, self.split_fractions[1]*100, self.split_fractions[2]*100)) 
+        train, valid, test = self.train_val_test_split(self.models_sample, train_frac=self.split_fractions[0], valid_frac=self.split_fractions[1], shuffle=True)
+        print("INFO: loading data...") 
         self.train_loader = DataLoader(dataset=train, batch_size=batch_size, shuffle=True)
         self.valid_loader = DataLoader(dataset=valid,  batch_size=batch_size, shuffle=False)
         self.test_loader = DataLoader(dataset=test,  batch_size=batch_size, shuffle=False)
@@ -75,8 +77,6 @@ class MultiClassifierTest:
         valid = Validation_Step(loss_fn=self.model.loss)
         optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)  
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, self.epochs)
-
-        print("INFO: start training") 
         print('INFO: number of training parameters: {}'.format(sum(p.numel() for p in self.model.parameters())))
 
         for epoch in tqdm(range(self.epochs), desc="epochs"):
