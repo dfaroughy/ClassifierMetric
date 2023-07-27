@@ -53,7 +53,14 @@ class DeepSets(nn.Module):
         criterion = nn.CrossEntropyLoss()
         loss = criterion(output, labels)
         return loss
-    
+
+    @torch.no_grad()
+    def predict(self, batch): 
+        data = batch['particle_features'].to(self.device)
+        logits = self.forward(data)
+        probs = torch.nn.functional.softmax(logits, dim=1)
+        return probs 
+
     @torch.no_grad()
     def probability(self, x, batch_size=1024): 
         num_batches = x.shape[0] // batch_size
