@@ -19,7 +19,7 @@ TODO fix ParticleNet
 ###################################################
 #...Import model and configuration cards
 
-from cards.ModelCard import DeepSetsConfig as config
+from cards.models import DeepSetsConfig as config
 from src.architectures import DeepSets as deepsets
 
 classifier_model = deepsets(model_config=config)
