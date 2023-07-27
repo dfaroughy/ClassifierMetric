@@ -1,18 +1,16 @@
 import torch
 import torch.nn as nn
 import numpy as np
-from sklearn.model_selection import train_test_split
-from torch.utils.data import DataLoader, Subset
+from torch.utils.data import DataLoader, Subset, ConcatDataset
 from tqdm.auto import tqdm
-
 from src.plots import plot_loss
 from src.datasets import JetNetDataset
 
-class MultiClassifierTest:
+class ModelClassifierTest:
 
     def __init__(self, 
                  classifier, 
-                 samples: dict=None,
+                 datasets: JetNetDataset=None,
                  truth_label: int=None,
                  split_fractions: tuple=None,
                  epochs: int=100, 
@@ -21,20 +19,11 @@ class MultiClassifierTest:
                  workdir: str='./',
                  seed=12345):
     
-        super(MultiClassifierTest, self).__init__()
+        super(ModelClassifierTest, self).__init__()
 
-        #...get samples
-
-        self.samples = samples
-        labels = [item['label'] for item in samples]
-        truth_label = np.max(labels) if truth_label is None else truth_label
-        idx_truth = [i for i, label in enumerate(labels) if label == truth_label]
-        idx_models = [i for i, label in enumerate(labels) if label != truth_label]
-        self.truth_sample = Subset(self.samples, idx_truth)
-        self.models_sample = Subset(self.samples, idx_models)
-
-        
+        self.datasets = datasets        
         self.split_fractions = split_fractions
+        self.truth_label = truth_label
         self.model = classifier
         self.workdir = workdir
         self.lr = lr
@@ -43,7 +32,8 @@ class MultiClassifierTest:
         self.epochs = epochs
 
 
-    def train_val_test_split(self, dataset, train_frac, valid_frac, shuffle=False):
+    def train_val_test_split(self, dataset, train_frac, valid_frac):
+
         assert sum(self.split_fractions) - 1.0 < 1e-3, "Split fractions do not sum to 1!"
         total_size = len(dataset)
         train_size = int(total_size * train_frac)
@@ -51,7 +41,7 @@ class MultiClassifierTest:
         
         #...define splitting indices
         
-        idx = torch.randperm(total_size) if shuffle else torch.arange(total_size)        
+        idx = torch.arange(total_size)        
         idx_train = idx[:train_size]
         idx_valid = idx[train_size : train_size + valid_size]
         idx_test = idx[train_size + valid_size :]
@@ -64,15 +54,38 @@ class MultiClassifierTest:
 
         return train_set, valid_set, test_set
 
-    def DataLoader(self, batch_size):
-        print("INFO: train/val/test split of {}% / {}% / {}%".format(self.split_fractions[0]*100, self.split_fractions[1]*100, self.split_fractions[2]*100)) 
-        train, valid, test = self.train_val_test_split(self.models_sample, train_frac=self.split_fractions[0], valid_frac=self.split_fractions[1], shuffle=True)
-        print("INFO: loading data...") 
-        self.train_loader = DataLoader(dataset=train, batch_size=batch_size, shuffle=True)
-        self.valid_loader = DataLoader(dataset=valid,  batch_size=batch_size, shuffle=False)
-        self.test_loader = DataLoader(dataset=test,  batch_size=batch_size, shuffle=False)
+
+    def DataLoaders(self, batch_size):
+
+        #...split datasets into truth data / models data
+
+        labels = [item['label'] for item in self.datasets]
+        truth_label = np.max(labels) if self.truth_label is None else self.truth_label
+        idx_truth = [i for i, label in enumerate(labels) if label == truth_label]
+        idx_models = [i for i, label in enumerate(labels) if label != truth_label]
+        samples_truth = Subset(self.datasets, idx_truth)
+        samples_models = Subset(self.datasets, idx_models)
+
+        #...get training / validation / test samples   
+
+        print("INFO: train/val/test split ratios of {} / {} / {}".format(self.split_fractions[0], self.split_fractions[1], self.split_fractions[2]))
+        train_models, valid_models, test_models = self.train_val_test_split(dataset=samples_models, 
+                                                                            train_frac=self.split_fractions[0], 
+                                                                            valid_frac=self.split_fractions[1])
+        _train_truth, _valid_truth, test_truth  = self.train_val_test_split(dataset=samples_truth, 
+                                                                            train_frac=self.split_fractions[0], 
+                                                                            valid_frac=self.split_fractions[1])
+        test = ConcatDataset([test_truth, test_models])
+
+        #...create dataloaders
+
+        self.train_loader = DataLoader(dataset=train_models, batch_size=batch_size, shuffle=True)
+        self.valid_loader = DataLoader(dataset=valid_models,  batch_size=batch_size, shuffle=False)
+        self.truth_loader = DataLoader(dataset=test,  batch_size=batch_size, shuffle=True)
+
 
     def train(self):
+
         train = Train_Step(loss_fn=self.model.loss)
         valid = Validation_Step(loss_fn=self.model.loss)
         optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)  
@@ -90,13 +103,16 @@ class MultiClassifierTest:
                           workdir=self.workdir): 
                 print("INFO: early stopping triggered! Reached maximum patience at {} epochs".format(epoch))
                 break
+
             if epoch % 5 == 1: plot_loss(train, valid, workdir=self.workdir)
         plot_loss(train, valid, workdir=self.workdir)
 
-    def test(self):
-        # TODO
-        pass
 
+    def test(self):
+        for batch in self.truth_loader:
+            prob = self.model.predict(batch)
+            print(prob.shape, batch['label'].shape)
+            print(torch.cat([prob, batch['label']], dim=-1))
 
 class Train_Step(nn.Module):
 
