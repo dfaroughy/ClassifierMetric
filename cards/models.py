@@ -3,8 +3,8 @@ from cards.configs import DataConfig, TrainConfig
 class MLPConfig(TrainConfig, DataConfig):
     
     name = 'MLP'
-    dim_input = 4
-    dim_output = 2
+    dim_input = len(DataConfig.features)
+    dim_output = len(DataConfig.datasets) - 1
     dim_hidden = 128 
     num_layers = 3 
 
@@ -20,8 +20,8 @@ class DeepSetsConfig(TrainConfig, DataConfig):
 class ParticleNetConfig(TrainConfig, DataConfig):
 
     name  = 'ParticleNet'
-    dim_input = 2
-    dim_output = 2
+    dim_input = len(DataConfig.features)
+    dim_output = len(DataConfig.datasets) - 1
     dim_hidden = 128 
     num_knn = 7     
     dim_conv_1 = 32
