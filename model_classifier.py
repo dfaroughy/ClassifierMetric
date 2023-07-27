@@ -48,7 +48,7 @@ classifier = ModelClassifierTest(classifier = classifier_model,
                                 epochs = config.epochs, 
                                 lr = config.lr, 
                                 early_stopping = config.early_stopping,
-                                workdir = config.workdir
+                                workdir = config.workdir,
                                 seed = config.seed)
 
 classifier.DataLoaders(batch_size=config.batch_size)
