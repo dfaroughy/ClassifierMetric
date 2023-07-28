@@ -27,7 +27,7 @@ directory = '{}.{}.{}feats.{}class.{}batch.{}lr'.format(config.jet_type, config.
 config.workdir = make_dir(directory, sub_dirs=['results'], overwrite=False)
 save_configs(configs=[config], filename=config.workdir+'/configs.json')
 
-#...Load data
+#...Load data, train classifier and get predictions on test datasets
 
 datasets = JetNetDataset(dir_path = 'data/', 
                         datasets = config.datasets,
@@ -36,8 +36,6 @@ datasets = JetNetDataset(dir_path = 'data/',
                         preprocess = config.preprocess,
                         particle_features = config.features,
                         )
-
-#...train and test classifier for discriminating between Models
 
 classifier = ModelClassifierTest(classifier = classifier_model, 
                                 datasets = datasets,
@@ -57,19 +55,18 @@ classifier.test()
 preds={}
 label = classifier.predictions[:, -1]
 preds['flow-match_mid'] = classifier.predictions[label == 0]
-preds['flow-match_eul'] = classifier.predictions[label == 1]
-preds['diffusion'] = classifier.predictions[label == 2] 
-preds['jetnet'] = classifier.predictions[label == 3]
+preds['diffusion'] = classifier.predictions[label == 1] 
+preds['jetnet'] = classifier.predictions[label == 2]
 save_data(preds, workdir=config.workdir, name='predictions')
 
 #...Plot classifier scores
 
 plot_class_score(test_probs=preds['jetnet'], 
-                model_probs=[preds['flow-match_mid'], preds['flow-match_eul'], preds['diffusion']],
+                model_probs=[preds['flow-match_mid'], preds['diffusion']],
                 label=0,
                 workdir=config.workdir+'/results',
                 figsize=(5,5), 
                 xlim=(1e-5,1),
                 bins=50,
-                legends=['flow-matching (midpoint)', 'flow-matching (euler)', 'diffusion (DDIM)'])
+                legends=['flow-matching (midpoint)', 'diffusion (DDIM)'])
 

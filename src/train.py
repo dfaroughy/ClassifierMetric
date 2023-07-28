@@ -95,6 +95,9 @@ class ModelClassifierTest:
             if epoch % 5 == 1: plot_loss(train, valid, workdir=self.workdir)
         plot_loss(train, valid, workdir=self.workdir)
 
+    def load_model(self, path):
+        self.model.load_state_dict(torch.load(path))
+
     @torch.no_grad()
     def test(self):
         output = []
@@ -103,7 +106,6 @@ class ModelClassifierTest:
             res = torch.cat([prob, batch['label'].unsqueeze(-1)], dim=-1)
             output.append(res)
         self.predictions = torch.cat(output, dim=0) 
-
 
 
 ############################

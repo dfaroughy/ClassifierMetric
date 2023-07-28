@@ -40,6 +40,15 @@ def save_configs(configs, filename, verbose=True):
     if verbose:
         print("INFO: saved model configs to {}".format(filename))
 
+class GetConfigs:
+    def __init__(self, path):
+        with open(path, 'r') as f:
+            params = json.load(f)
+        config_key, config = list(params.items())[0]
+        self.config_key = config_key
+        for key, value in config.items():
+            setattr(self, key, value)
+
 def save_data(samples: dict, name: str, workdir : str, verbose: bool = True):
     for key in samples.keys():
         sample = samples[key].numpy()
