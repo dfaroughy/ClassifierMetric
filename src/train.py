@@ -52,16 +52,22 @@ class ModelClassifierTest:
 
 
     def DataLoaders(self, batch_size):
+
         #...split datasets into truth data / models data
+
+        print("INFO: building dataloaders...")
         labels = [item['label'] for item in self.datasets]
         truth_label = np.max(labels) if self.truth_label is None else self.truth_label
-        idx_truth = [i for i, label in enumerate(labels) if label == truth_label]
-        idx_models = [i for i, label in enumerate(labels) if label != truth_label]
+        idx_truth, idx_models = [], []
+        for i, label in enumerate(labels):
+            if label == truth_label: idx_truth.append(i)
+            else: idx_models.append(i)
         samples_truth = Subset(self.datasets, idx_truth)
         samples_models = Subset(self.datasets, idx_models)
 
         #...get training / validation / test samples   
-        print("INFO: train/val/test split ratios of {} / {} / {}".format(self.split_fractions[0], self.split_fractions[1], self.split_fractions[2]))
+
+        print("INFO: train/val/test split ratios: {}/{}/{}".format(self.split_fractions[0], self.split_fractions[1], self.split_fractions[2]))
         train_models, valid_models, test_models = self.train_val_test_split(dataset=samples_models, 
                                                                             train_frac=self.split_fractions[0], 
                                                                             valid_frac=self.split_fractions[1], 
@@ -72,6 +78,7 @@ class ModelClassifierTest:
         test = ConcatDataset([test_models, test_truth])
 
         #...create dataloaders
+        
         self.train_loader = DataLoader(dataset=train_models, batch_size=batch_size, shuffle=True)
         self.valid_loader = DataLoader(dataset=valid_models,  batch_size=batch_size, shuffle=False)
         self.test_loader = DataLoader(dataset=test,  batch_size=batch_size, shuffle=True)
@@ -79,9 +86,10 @@ class ModelClassifierTest:
 
     def train(self):
         train = Train_Step(loss_fn=self.model.loss)
-        valid = Validation_Step(loss_fn=self.model.loss)
+        valid = Validation_Step(loss_fn=self.model.loss, warmup_epochs=50)
         optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)  
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, self.epochs)
+
         print('INFO: number of training parameters: {}'.format(sum(p.numel() for p in self.model.parameters())))
         for epoch in tqdm(range(self.epochs), desc="epochs"):
             train.update(data=self.train_loader, optimizer=optimizer)       
@@ -138,10 +146,9 @@ class Train_Step(nn.Module):
 
 class Validation_Step(nn.Module):
 
-    def __init__(self, loss_fn, model_name='best'):
+    def __init__(self, loss_fn, warmup_epochs=10):
         super(Validation_Step, self).__init__()
         self.loss_fn = loss_fn
-        self.name = model_name
         self.loss = 0
         self.epoch = 0
         self.patience = 0
@@ -149,6 +156,7 @@ class Validation_Step(nn.Module):
         self.terminate_loop = False
         self.data_size = 0
         self.print_epoch = 5
+        self.warmup_epochs = warmup_epochs
         self.losses = []
 
     @torch.no_grad()
@@ -168,7 +176,7 @@ class Validation_Step(nn.Module):
                 self.loss_min = self.loss
                 self.patience = 0
                 torch.save(save_best.state_dict(), workdir + '/{}_model.pth'.format(self.name))    
-            else: self.patience += 1
+            else: self.patience += 1 if self.epoch > self.warmup_epochs else 0
             if self.patience >= early_stopping: self.terminate_loop = True
         else:
             torch.save(save_best.state_dict(), workdir + '/{}_model.pth'.format(self.name))
