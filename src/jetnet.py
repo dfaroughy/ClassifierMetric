@@ -80,34 +80,34 @@ class JetNetFeatures:
     def multiplicity(self):
         return self.particles[..., -1].sum(dim=-1)
     
-    # def format_data(self, data: Tensor):
+    def format_data(self, data: Tensor):
 
-    #     # fill with zero padding up to 'max_num_consts' if necessary
+        # fill with zero padding up to 'max_num_consts' if necessary
 
-    #     if num_consts < max_num_consts:
-    #         zero_rows = torch.zeros(self.num_jets, max_num_consts - num_consts, dim)
-    #         events = torch.cat((events, zero_rows), dim=1) 
+        if num_consts < max_num_consts:
+            zero_rows = torch.zeros(self.num_jets, max_num_consts - num_consts, dim)
+            events = torch.cat((events, zero_rows), dim=1) 
 
-    #     # get particle features
+        # get particle features
 
-    #     eta_rel = events[..., 0, None]
-    #     phi_rel = events[..., 1, None]
-    #     pt_rel = events[..., 2, None] 
-    #     mask = events[..., 3, None] if masked else (events[..., 0] + events[..., 1] + events[..., 2] != 0).int().unsqueeze(-1) 
-    #     R = torch.sqrt(eta_rel**2 + phi_rel**2)
-    #     e_rel = pt_rel * torch.cosh(eta_rel)
+        eta_rel = events[..., 0, None]
+        phi_rel = events[..., 1, None]
+        pt_rel = events[..., 2, None] 
+        mask = events[..., 3, None] if masked else (events[..., 0] + events[..., 1] + events[..., 2] != 0).int().unsqueeze(-1) 
+        R = torch.sqrt(eta_rel**2 + phi_rel**2)
+        e_rel = pt_rel * torch.cosh(eta_rel)
     
-    #     data = torch.cat((eta_rel, phi_rel, pt_rel, e_rel, R, mask), dim=-1)  
+        data = torch.cat((eta_rel, phi_rel, pt_rel, e_rel, R, mask), dim=-1)  
 
-    #     # pt-order particles
+        # pt-order particles
         
-    #     _ , i = torch.sort(data[:, :, 2], dim=1, descending=True) 
-    #     particles = torch.gather(data, 1, i.unsqueeze(-1).expand_as(data)) 
+        _ , i = torch.sort(data[:, :, 2], dim=1, descending=True) 
+        particles = torch.gather(data, 1, i.unsqueeze(-1).expand_as(data)) 
 
-    #     # clip negative momenta
+        # clip negative momenta
 
-    #     self.particles = torch.zeros_like(particles)
-    #     self.particles[particles[..., 2] >= 0.0] = particles[particles[..., 2] >= 0.0]
+        self.particles = torch.zeros_like(particles)
+        self.particles[particles[..., 2] >= 0.0] = particles[particles[..., 2] >= 0.0]
 
 
     def nth_particle(self, n, feature: str=None):
