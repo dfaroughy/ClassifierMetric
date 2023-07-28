@@ -15,10 +15,6 @@ from src.architectures import DeepSets as deepsets
 from cards.models import DeepSetsConfig as config
 classifier_model = deepsets(model_config=config)
 
-# from src.architectures import MLP as mlp
-# from cards.models import MLPConfig as config
-# classifier_model = mlp(model_config=config)
-
 ###################################################
 
 #...Create working folders
@@ -27,7 +23,7 @@ directory = '{}.{}.{}feats.{}class.{}batch.{}lr'.format(config.jet_type, config.
 config.workdir = make_dir(directory, sub_dirs=['results'], overwrite=False)
 save_configs(configs=[config], filename=config.workdir+'/configs.json')
 
-#...Load data, train classifier and get predictions on test datasets
+#...Load data and train model classifier 
 
 datasets = JetNetDataset(dir_path = 'data/', 
                         datasets = config.datasets,
@@ -35,7 +31,7 @@ datasets = JetNetDataset(dir_path = 'data/',
                         num_jets = config.size,
                         preprocess = config.preprocess,
                         particle_features = config.features,
-                        )
+                        ) 
 
 classifier = ModelClassifierTest(classifier = classifier_model, 
                                 datasets = datasets,
@@ -48,15 +44,16 @@ classifier = ModelClassifierTest(classifier = classifier_model,
 
 classifier.DataLoaders(batch_size=config.batch_size)
 classifier.train()
-classifier.test()
 
-#...Evaluate classifier on test datasets
+#...Evaluate predictions on test datasets
+
+classifier.test()
 
 preds={}
 label = classifier.predictions[:, -1]
-preds['flow-match_mid'] = classifier.predictions[label == 0]
-preds['diffusion'] = classifier.predictions[label == 1] 
 preds['jetnet'] = classifier.predictions[label == 2]
+preds['flow-match_mid'] = classifier.predictions[label == 0][:preds['jetnet'].shape[0]] 
+preds['diffusion'] = classifier.predictions[label == 1][:preds['jetnet'].shape[0]] 
 save_data(preds, workdir=config.workdir, name='predictions')
 
 #...Plot classifier scores
@@ -67,6 +64,5 @@ plot_class_score(test_probs=preds['jetnet'],
                 workdir=config.workdir+'/results',
                 figsize=(5,5), 
                 xlim=(1e-5,1),
-                bins=50,
                 legends=['flow-matching (midpoint)', 'diffusion (DDIM)'])
 
