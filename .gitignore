@@ -8,3 +8,4 @@ src/__pycache__
 .vscode/*
 data/*
 test.py
+cards
