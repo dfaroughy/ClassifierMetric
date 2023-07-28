@@ -2,8 +2,12 @@ import torch
 import numpy as np
 import os
 import h5py
+import json
+import glob
+
 from torch.utils.data import Dataset
 
+# TODO fix preprocessing via method names
 
 class JetNetDataset(Dataset):
 
@@ -14,8 +18,8 @@ class JetNetDataset(Dataset):
         - `num_jets`: number of jets to load, default is `None`
         - `num_constituents`: number of particle constituents in each jet, default is `150`
         - `particle_features`: list of particle features to include in data, default is `['eta_rel', 'phi_rel', 'pt_rel']`
-        - `preprocess`: dictionary of preprocessing methods to apply to data, default is `None`
-        - `clip_neg_pt`: clip negative pt values to zero, default is `False`
+        - `preprocess`: TODO preprocessing methods to apply to data, default is `None`
+        - `remove_negative_pt`: remove negative pt constituents from jet, default is `False` 
         Loads and formats data from data files in format `.hdf5`.\\
         Adds mask and zero-padding.\\
         Adds class label for each sample via `class_labels`.\\
@@ -30,7 +34,8 @@ class JetNetDataset(Dataset):
                  preprocess : list=['standardize'],
                  num_jets: int=100000,
                  num_constituents: int=150,
-                 remove_negative_pt: bool=False):
+                 remove_negative_pt: bool=False,
+                 compute_jet_features: bool=False):
         
         self.path = dir_path
         self.datasets = datasets
@@ -39,6 +44,7 @@ class JetNetDataset(Dataset):
         self.num_consts = num_constituents
         self.particle_features = particle_features
         self.remove_negative_pt = remove_negative_pt
+        self.compute_jet_features = compute_jet_features
         self.preprocess = preprocess 
         self.summary_statistics = {}
         self.dataset_list = self.get_data()
@@ -47,54 +53,56 @@ class JetNetDataset(Dataset):
         output = {}
         datasets, labels = self.dataset_list
         dataset = datasets[idx]  
-        jet = self.get_jet_features(dataset)
+        
+        if self.compute_jet_features:
+            jet = self.get_jet_features(dataset)
+            output['jet_features'] = jet
+
         if self.preprocess:
-            i = int(labels[idx])
-            dataset = self.apply_preprocessing(datasets[idx], stats=self.summary_statistics[i])  
+            dataset = self.apply_preprocessing(dataset, stats=self.summary_statistics['all'])  
+
         output['label'] = labels[idx]
         output['particle_features'] = dataset[:, :-1]
         output['mask'] = dataset[:, -1]
-        output['jet_features'] = jet
         return output
 
     def __len__(self):
         return self.dataset_list[0].size(0)
 
     def get_data(self):
+        print("INFO: loading and preprocessing data from {}".format(self.path))
         data_list = []
         label_list = []
-        for root, dirs, files in os.walk(self.path):
-            for file in files:
-                key = None
-                path = os.path.join(root, file)
-                if file.endswith('.hdf5') or file.endswith('.h5'):
-                    with h5py.File(path, 'r') as f:
-                        for key in f.keys():
-                            if self.datasets is not None:
-                                for k in self.datasets.keys():
-                                    if file in self.datasets[k][0] and key==self.datasets[k][1]:
-                                        label = self.class_labels[k] if self.class_labels is not None else None
-                                        dataset = torch.Tensor(np.array(f[key]))
-                                        dataset = self.apply_formatting(dataset)
-                                        self.summary_statistics[label] = self.summary_stats(dataset)
-                                        data_list.append(dataset)
-                                        label_list.append(torch.full((dataset.shape[0],), label))
+        for data in list(self.datasets.keys()):
+            file_name = self.datasets[data][0]
+            key = self.datasets[data][1] if len(self.datasets[data]) > 1 else None
+            file_path = os.path.join(self.path, file_name)
+            if data == 'truth' and self.class_labels[data] == 0:
+                raise ValueError('Truth data must have label different from 0') 
+            with h5py.File(file_path, 'r') as f:
+                label = self.class_labels[data] if self.class_labels is not None else None
+                print('\t- {} ({}) label: {}'.format(file_name, key, label))
+                dataset = torch.from_numpy(f[key][...])
+                dataset = self.apply_formatting(dataset)
+                self.summary_statistics[label] = self.summary_stats(dataset)
+                data_list.append(dataset)
+                label_list.append(torch.full((dataset.shape[0],), label))
         data_tensor = torch.cat(data_list, dim=0)
         label_tensor = torch.cat(label_list, dim=0) 
+        self.summary_statistics['all'] = self.summary_stats(data_tensor)
         return data_tensor, label_tensor
-    
+
     def apply_formatting(self, sample):
         sample = FormatData(sample,
-                          num_jets=self.num_jets,
-                          num_constituents=self.num_consts,
-                          particle_features=self.particle_features,
-                          remove_negative_pt=self.remove_negative_pt)
+                            num_jets=self.num_jets,
+                            num_constituents=self.num_consts,
+                            particle_features=self.particle_features,
+                            remove_negative_pt=self.remove_negative_pt)
         sample.format()
         return sample.data
     
     def apply_preprocessing(self, sample, stats):
         sample = PreprocessData(data=sample, stats=stats)
-        sample.center_jets()
         sample.standardize()
         return sample.jet
     
@@ -112,6 +120,30 @@ class JetNetDataset(Dataset):
         mean, std, min, max = mean[:-1], std[:-1], min[:-1], max[:-1]
         return (mean, std, min, max)
     
+    def save(self, path):
+        print("INFO: saving dataset to {}".format(path))
+        torch.save(self.dataset_list, os.path.join(path, 'dataset.pth'))
+        dataset_args = {'dir_path': self.path, 
+                     'datasets': self.datasets, 
+                     'class_labels': self.class_labels, 
+                     'particle_features': self.particle_features,
+                     'preprocess': self.preprocess, 
+                     'num_jets': self.num_jets, 
+                     'num_constituents': self.num_consts, 
+                     'remove_negative_pt': self.remove_negative_pt}
+        with open(path+'/dataset_configs.json', 'w') as json_file:
+            json.dump(dataset_args, json_file, indent=4)
+
+    @staticmethod
+    def load(path):
+        print("INFO: loading dataset from {}".format(path))
+        dataset_list = torch.load(os.path.join(path, 'dataset.pth'))
+        with open(path+'/dataset_configs.json') as json_file:
+            dataset_args = json.load(json_file)
+            loaded_dataset = JetNetDataset(**dataset_args)
+        loaded_dataset.dataset_list = dataset_list
+        return loaded_dataset
+
 class FormatData:
 
     ''' This module formats the data in the following way:
@@ -222,9 +254,9 @@ class PreprocessData:
             self.mean, self.std, self.min, self.max = stats 
         self.mask = self.jet[:, -1, None]
         self.jet_unmask = self.jet[:, :self.dim_features]
-        self.jet_features = self.get_jet_features()
     
     def get_jet_features(self):
+        # slow
         mask = self.mask.squeeze(-1)
         eta, phi, pt = self.jet[:, 0], self.jet[:, 1], self.jet[:, 2]
         multiplicity = torch.sum(mask, dim=0)
@@ -236,9 +268,10 @@ class PreprocessData:
         m_j  = torch.sqrt(e_j**2 - px_j**2 - py_j**2 - pz_j**2)
         eta_j = torch.asinh(pz_j / pt_j)
         phi_j = torch.atan2(py_j, px_j)
-        return torch.Tensor((pt_j, eta_j, phi_j, m_j, multiplicity))
+        self.jet_features = torch.Tensor((pt_j, eta_j, phi_j, m_j, multiplicity))
         
     def center_jets(self):
+        # slow
         N = self.jet.shape[0]
         jet_coords = self.jet_features[1:3] # jet (eta, phi)
         jet_coords = jet_coords.repeat(N, 1) * self.mask
