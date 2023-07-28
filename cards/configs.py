@@ -2,16 +2,16 @@ class DataConfig:
 
     jet_type = 'tops'
 
-    datasets = {'jetnet'      : ('t150.hdf5', 'particle_features'),
-                'fm_midpoint' : ('fm_tops150_cond_mp200nfe.h5', 'etaphipt'),
-                'diff_ddim'   : ('ddim_200.h5', 'etaphipt_frac')}
+    datasets = {'truth'     : ['t150.hdf5', 'particle_features'],
+                'flow_mid'  : ['fm_tops150_cond_mp200nfe.h5', 'etaphipt'],
+                'diff_mid'  : ['diff_midpoint_100_csts.h5', 'etaphipt_frac']}
     
-    labels = {'fm_midpoint'   : 0,
-              'diff_ddim'     : 1,
-              'jetnet'        : 2} 
+    labels = {'flow_mid'   : 0,
+              'diff_mid'   : 1,
+              'truth'      : 2} 
     
     features = ['eta_rel', 'phi_rel', 'pt_rel', 'R', 'e_rel']
-    preprocess = ['center_jets', 'standardize']
+    preprocess = ['standardize']
     
 class TrainConfig:
 
