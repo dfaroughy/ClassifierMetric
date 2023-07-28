@@ -20,6 +20,7 @@ class MLP(nn.Module):
         super(MLP, self).__init__()
         self.dim_features = model_config.dim_input
         self.device = model_config.device
+        self.criterion = nn.CrossEntropyLoss()
         self.wrapper = _MLP(dim=model_config.dim_input, 
                             num_classes=model_config.dim_output,
                             dim_hidden=model_config.dim_hidden, 
@@ -32,8 +33,8 @@ class MLP(nn.Module):
         data = batch['jet_features'].to(self.device)
         labels = batch['label'].to(self.device)
         output = self.forward(data)
-        criterion = nn.CrossEntropyLoss()
-        loss = criterion(output, labels)
+        # criterion = nn.CrossEntropyLoss()
+        loss = self.criterion(output, labels)
         return loss
 
     @torch.no_grad()
@@ -49,21 +50,25 @@ class DeepSets(nn.Module):
         super(DeepSets, self).__init__()
         self.dim_features = model_config.dim_input
         self.device = model_config.device
+        self.criterion = nn.CrossEntropyLoss()
         self.wrapper = _DeepSets(dim=model_config.dim_input, 
                                 num_classes=model_config.dim_output,
                                 dim_hidden=model_config.dim_hidden, 
                                 num_layers_1=model_config.num_layers_1,
                                 num_layers_2=model_config.num_layers_2,
                                 device=model_config.device)
+        
+    
     def forward(self, x):
         return self.wrapper.forward(x)
+    
     
     def loss(self, batch):
         data = batch['particle_features'].to(self.device)
         labels = batch['label'].to(self.device)
         output = self.forward(data)
-        criterion = nn.CrossEntropyLoss()
-        loss = criterion(output, labels)
+        # criterion = nn.CrossEntropyLoss()
+        loss =  self.criterion(output, labels)
         return loss
 
     @torch.no_grad()
