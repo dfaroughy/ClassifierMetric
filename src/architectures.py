@@ -14,6 +14,39 @@ Possible classifier architectures:
 
 #...wrappers
 
+class DeepSets(nn.Module):
+    ''' Wrapper class for the Deep Sets architecture'''
+    def __init__(self, model_config):
+        super(DeepSets, self).__init__()
+        self.dim_features = model_config.dim_input
+        self.device = model_config.device
+        self.criterion = nn.CrossEntropyLoss()
+        self.wrapper = _DeepSets(dim=model_config.dim_input, 
+                                num_classes=model_config.dim_output,
+                                dim_hidden=model_config.dim_hidden, 
+                                num_layers_1=model_config.num_layers_1,
+                                num_layers_2=model_config.num_layers_2,
+                                device=model_config.device)
+        
+    def forward(self, features, mask):
+        return self.wrapper.forward(features, mask)
+    
+    def loss(self, batch):
+        features = batch['particle_features'].to(self.device)
+        labels = batch['label'].to(self.device)
+        mask = batch['mask'].unsqueeze(-1).to(self.device)
+        output = self.forward(features, mask)
+        loss =  self.criterion(output, labels)
+        return loss
+
+    @torch.no_grad()
+    def predict(self, batch): 
+        features = batch['particle_features'].to(self.device)
+        mask = batch['mask'].unsqueeze(-1).to(self.device)
+        logits = self.forward(features, mask)
+        probs = torch.nn.functional.softmax(logits, dim=1)
+        return probs 
+
 class MLP(nn.Module):
     ''' Wrapper class for the MLP architecture'''
     def __init__(self, model_config):
@@ -32,8 +65,7 @@ class MLP(nn.Module):
     def loss(self, batch):
         data = batch['jet_features'].to(self.device)
         labels = batch['label'].to(self.device)
-        output = self.forward(data)
-        # criterion = nn.CrossEntropyLoss()
+        output = self.forward(x=data)
         loss = self.criterion(output, labels)
         return loss
 
@@ -44,60 +76,36 @@ class MLP(nn.Module):
         probs = torch.nn.functional.softmax(logits, dim=1)
         return probs 
 
-class DeepSets(nn.Module):
-    ''' Wrapper class for the Deep Sets architecture'''
-    def __init__(self, model_config):
-        super(DeepSets, self).__init__()
-        self.dim_features = model_config.dim_input
-        self.device = model_config.device
-        self.criterion = nn.CrossEntropyLoss()
-        self.wrapper = _DeepSets(dim=model_config.dim_input, 
-                                num_classes=model_config.dim_output,
-                                dim_hidden=model_config.dim_hidden, 
-                                num_layers_1=model_config.num_layers_1,
-                                num_layers_2=model_config.num_layers_2,
-                                device=model_config.device)
-        
-    
-    def forward(self, x):
-        return self.wrapper.forward(x)
-    
-    
-    def loss(self, batch):
-        data = batch['particle_features'].to(self.device)
-        labels = batch['label'].to(self.device)
-        output = self.forward(data)
-        # criterion = nn.CrossEntropyLoss()
-        loss =  self.criterion(output, labels)
-        return loss
 
-    @torch.no_grad()
-    def predict(self, batch): 
-        data = batch['particle_features'].to(self.device)
-        logits = self.forward(data)
-        probs = torch.nn.functional.softmax(logits, dim=1)
-        return probs 
 
 #...architecture classes
 
-class _MLP(nn.Module):
+# class _DeepSets(nn.Module):
 
-    def __init__(self, 
-                dim, 
-                dim_hidden,
-                num_layers, 
-                num_classes, 
-                device='cpu'):
+#     def __init__(self, 
+#                  dim, 
+#                  num_classes, 
+#                  dim_hidden=128, 
+#                  num_layers_1=2, 
+#                  num_layers_2=2, 
+#                  device='cpu'):
 
-        super(_MLP, self).__init__()
+#         super(_DeepSets, self).__init__()
 
-        self.device = device
-        self.layers = [nn.Linear(dim, dim_hidden), nn.LeakyReLU()] + [nn.Linear(dim_hidden, dim_hidden), nn.LeakyReLU()] * (num_layers - 1) + [nn.Linear(dim_hidden, num_classes), nn.LeakyReLU()]
-        self.net = nn.Sequential(*self.layers).to(device)
+#         self.device = device
+#         self.dim = dim
+#         layers_1 = [nn.Linear(self.dim, dim_hidden), nn.LeakyReLU()] + [nn.Linear(dim_hidden, dim_hidden), nn.LeakyReLU()] * (num_layers_1 - 1)
+#         layers_2 = [nn.Linear(2 * dim_hidden, dim_hidden), nn.LeakyReLU()] + [nn.Linear(dim_hidden, dim_hidden), nn.LeakyReLU()] * (num_layers_2 - 1) + [nn.Linear(dim_hidden, num_classes), nn.LeakyReLU()]
 
-    def forward(self, x):
-        return self.net(x)
-    
+#         self.phi = nn.Sequential(*layers_1).to(device)
+#         self.rho = nn.Sequential(*layers_2).to(device)
+
+#     def forward(self, features, mask): 
+#         h = self.phi(x)                                                      # shape: (N, m, hidden_dim)
+#         h = torch.cat([torch.sum(h, dim=1), torch.mean(h, dim=1)], dim=1)    # sum and mean pooling shape: (N, hidden_dim)
+#         h = self.rho(h)                                                      # shape: (N, output_dim)
+#         return h
+
 
 class _DeepSets(nn.Module):
 
@@ -119,11 +127,34 @@ class _DeepSets(nn.Module):
         self.phi = nn.Sequential(*layers_1).to(device)
         self.rho = nn.Sequential(*layers_2).to(device)
 
-    def forward(self, x): 
-        h = self.phi(x)                                                      # shape: (N, m, hidden_dim)
-        h = torch.cat([torch.sum(h, dim=1), torch.mean(h, dim=1)], dim=1)    # sum and mean pooling shape: (N, hidden_dim)
-        h = self.rho(h)                                                      # shape: (N, output_dim)
-        return h
+    def forward(self, features, mask):
+        h = self.phi(features)  
+        h_sum = (h * mask).sum(1, keepdim=False)
+        h_mean = h_sum / mask.sum(1, keepdim=False)
+        h_meansum_pool = torch.cat([h_mean,h_sum], dim=1)   # sum and mean pooling shape: (N, hidden_dim)
+        f = self.rho(h_meansum_pool)                        # shape: (N, output_dim)
+        return f
+
+
+class _MLP(nn.Module):
+
+    def __init__(self, 
+                dim, 
+                dim_hidden,
+                num_layers, 
+                num_classes, 
+                device='cpu'):
+
+        super(_MLP, self).__init__()
+
+        self.device = device
+        self.layers = [nn.Linear(dim, dim_hidden), nn.LeakyReLU()] + [nn.Linear(dim_hidden, dim_hidden), nn.LeakyReLU()] * (num_layers - 1) + [nn.Linear(dim_hidden, num_classes), nn.LeakyReLU()]
+        self.net = nn.Sequential(*self.layers).to(device)
+
+    def forward(self, x):
+        return self.net(x)
+    
+
 
 
 # class ParticleNet(nn.Module):
