@@ -17,16 +17,16 @@ class DataConfig:
               'jetnet150'       : -1  # test dataset
               } 
     features = ['eta_rel', 'phi_rel', 'pt_rel', 'R', 'e_rel']
-    preprocess = ['standardize']
+    preprocess = ['normalize', 'logit_transform', 'standardize']
     
 class TrainConfig:
 
-    device = 'cuda:2'
+    device = 'cuda:1'
     split_fractions = [0.5, 0.2, 0.3]  # train / val / test 
     size = None 
-    batch_size  = 256
+    batch_size  = 4096
     epochs = 10000   
     early_stopping  = 30 
-    warmup_epochs = 250    
+    warmup_epochs = 100    
     lr  = 0.001
     seed = 12345

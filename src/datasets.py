@@ -103,6 +103,8 @@ class JetNetDataset(Dataset):
     
     def apply_preprocessing(self, sample, stats):
         sample = PreprocessData(data=sample, stats=stats)
+        sample.normalize()
+        sample.logit_transform()
         sample.standardize()
         return sample.jet
     
@@ -291,11 +293,11 @@ class PreprocessData:
         self.jet_unmask = self.jet_unmask * self.mask
         self.jet = torch.cat((self.jet_unmask, self.mask), dim=-1)
     
-    def logit_tramsform(self, alpha=1e-6):
-        self.jet_unmask = self.logit(self.jet_unmask, alpha=alpha)
+    def logit_transform(self):
+        self.jet_unmask = self.logit(self.jet_unmask)
         self.jet_unmask = self.jet_unmask * self.mask
         self.jet = torch.cat((self.jet_unmask, self.mask), dim=-1)
 
-    def logit(t, alpha=1e-6):
-        x = alpha + (1 - 2 * alpha) * t
+    def logit(t: torch.Tensor=None, alpha=1e-6):
+        x = t * (1 - 2 * alpha) + alpha
         return torch.log(x/(1-x))

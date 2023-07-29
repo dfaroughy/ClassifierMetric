@@ -31,6 +31,7 @@ datasets = JetNetDataset(dir_path = 'data/',
                         num_jets = config.size,
                         preprocess = config.preprocess,
                         particle_features = config.features,
+                        remove_negative_pt = True
                         ) 
 
 classifier = ModelClassifierTest(classifier = classifier_model, 
