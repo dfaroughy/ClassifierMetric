@@ -39,6 +39,7 @@ classifier = ModelClassifierTest(classifier = classifier_model,
                                 epochs = config.epochs, 
                                 lr = config.lr, 
                                 early_stopping = config.early_stopping,
+                                warmup_epochs = config.warmup_epochs,
                                 workdir = config.workdir,
                                 seed = config.seed)
 
@@ -65,4 +66,3 @@ plot_class_score(test_probs=preds['jetnet'],
                 figsize=(5,5), 
                 xlim=(1e-5,1),
                 legends=['flow-matching (midpoint)', 'diffusion (DDIM)'])
-
