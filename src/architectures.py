@@ -80,33 +80,6 @@ class MLP(nn.Module):
 
 #...architecture classes
 
-# class _DeepSets(nn.Module):
-
-#     def __init__(self, 
-#                  dim, 
-#                  num_classes, 
-#                  dim_hidden=128, 
-#                  num_layers_1=2, 
-#                  num_layers_2=2, 
-#                  device='cpu'):
-
-#         super(_DeepSets, self).__init__()
-
-#         self.device = device
-#         self.dim = dim
-#         layers_1 = [nn.Linear(self.dim, dim_hidden), nn.LeakyReLU()] + [nn.Linear(dim_hidden, dim_hidden), nn.LeakyReLU()] * (num_layers_1 - 1)
-#         layers_2 = [nn.Linear(2 * dim_hidden, dim_hidden), nn.LeakyReLU()] + [nn.Linear(dim_hidden, dim_hidden), nn.LeakyReLU()] * (num_layers_2 - 1) + [nn.Linear(dim_hidden, num_classes), nn.LeakyReLU()]
-
-#         self.phi = nn.Sequential(*layers_1).to(device)
-#         self.rho = nn.Sequential(*layers_2).to(device)
-
-#     def forward(self, features, mask): 
-#         h = self.phi(x)                                                      # shape: (N, m, hidden_dim)
-#         h = torch.cat([torch.sum(h, dim=1), torch.mean(h, dim=1)], dim=1)    # sum and mean pooling shape: (N, hidden_dim)
-#         h = self.rho(h)                                                      # shape: (N, output_dim)
-#         return h
-
-
 class _DeepSets(nn.Module):
 
     def __init__(self, 
@@ -135,7 +108,7 @@ class _DeepSets(nn.Module):
         h = self.phi(features)                               # shape: (batch_size, num_consts, dim_hidden)
         h_sum = (h * mask).sum(1, keepdim=False)
         h_mean = h_sum / mask.sum(1, keepdim=False)
-        h_meansum_pool = torch.cat([h_mean, h_sum], dim=1)   # shape: (batch_size, dim_hidden)
+        h_meansum_pool = torch.cat([h_mean, h_sum], dim=1)   # shape: (batch_size, 2*dim_hidden)
         f = self.rho(h_meansum_pool)                         # shape: (batch_size, num_classes)
         return f
 
@@ -158,7 +131,6 @@ class _MLP(nn.Module):
     def forward(self, feautures):
         return self.net(feautures)
     
-
 
 
 # class ParticleNet(nn.Module):

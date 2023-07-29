@@ -9,7 +9,7 @@ from src.utils import GetConfigs
 
 from src.architectures import DeepSets as deepsets
 
-path = 'tops.DeepSets.5feats.2class.1024batch.0.0001lr__1'
+path = 'tops.DeepSets.5feats.2class.1024batch.0.0001lr__2'
 config = GetConfigs(path=path + '/configs.json')
 classifier_model = deepsets(model_config=config)
 
@@ -58,7 +58,7 @@ plot_class_score(test_probs=preds['jetnet'],
                 xlim=(1e-5,1),
                 legends=['flow-matching', 'diffusion'])
 
-#...perofmance profiling
+#...performance profiling
 
 # import cProfile, pstats, io
 # with cProfile.Profile() as pr:
