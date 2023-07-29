@@ -9,7 +9,7 @@ from src.utils import GetConfigs
 
 from src.architectures import DeepSets as deepsets
 
-path = 'tops.DeepSets.5feats.4class.1024batch.0.0001lr__1'
+path = 'tops.DeepSets.5feats.4class.1024batch.0.001lr__2'
 config = GetConfigs(path=path + '/configs.json')
 classifier_model = deepsets(model_config=config)
 

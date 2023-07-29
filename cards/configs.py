@@ -21,10 +21,10 @@ class DataConfig:
     
 class TrainConfig:
 
-    device = 'cuda:3'
+    device = 'cuda:2'
     split_fractions = [0.5, 0.2, 0.3]  # train / val / test 
     size = None 
-    batch_size  = 1024
+    batch_size  = 256
     epochs = 10000   
     early_stopping  = 30 
     warmup_epochs = 250    
