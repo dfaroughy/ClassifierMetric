@@ -22,9 +22,10 @@ def make_dir(path, overwrite=False, sub_dirs=False, verbose=True):
         for d in sub_dirs: 
             os.mkdir(Directory+'/'+d)
     if verbose:
-        print("#================================================")
-        print("INFO: created directory: {}".format(Directory))
-        print("#================================================")
+        info = "INFO: created directory: {}".format(Directory)
+        print("#"+"="*len(info)-1)
+        print(info)
+        print("#"+"="*len(info)-1)
     return Directory
 
 def save_configs(configs, filename, verbose=True):
