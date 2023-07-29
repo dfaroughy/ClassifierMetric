@@ -176,7 +176,7 @@ class FormatData:
             self.zero_padding()
             self.get_particle_features()
             if self.remove_negative_pt: self.remove_neg_pt() 
-            if self.num_jets is not None: self.trim_dataset()
+            self.trim_dataset()
         if self.data_rank(2): 
             # TODO
             pass
