@@ -1,9 +1,8 @@
-from src.utils import make_dir, save_configs, save_data
+from src.utils import save_data
 from src.plots import plot_class_score
 from src.datasets import JetNetDataset
 from src.train import ModelClassifierTest
 from src.utils import GetConfigs
-
 
 ###################################################
 #...Import model and load configuration cards
@@ -57,9 +56,7 @@ plot_class_score(test_probs=preds['jetnet'],
                 workdir=config.workdir+'/results',
                 figsize=(5,5), 
                 xlim=(1e-5,1),
-                legends=['flow-matching (midpoint)', 'diffusion (DDIM)'])
-
-
+                legends=['flow-matching', 'diffusion'])
 
 #...perofmance profiling
 

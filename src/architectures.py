@@ -34,7 +34,7 @@ class DeepSets(nn.Module):
     def loss(self, batch):
         features = batch['particle_features'].to(self.device)
         labels = batch['label'].to(self.device)
-        mask = batch['mask'].unsqueeze(-1).to(self.device)
+        mask = batch['mask'].to(self.device)
         output = self.forward(features, mask)
         loss =  self.criterion(output, labels)
         return loss
@@ -42,7 +42,7 @@ class DeepSets(nn.Module):
     @torch.no_grad()
     def predict(self, batch): 
         features = batch['particle_features'].to(self.device)
-        mask = batch['mask'].unsqueeze(-1).to(self.device)
+        mask = batch['mask'].to(self.device)
         logits = self.forward(features, mask)
         probs = torch.nn.functional.softmax(logits, dim=1)
         return probs 
@@ -110,8 +110,8 @@ class MLP(nn.Module):
 class _DeepSets(nn.Module):
 
     def __init__(self, 
-                 dim, 
-                 num_classes, 
+                 dim=3, 
+                 num_classes=2, 
                  dim_hidden=128, 
                  num_layers_1=2, 
                  num_layers_2=2, 
@@ -121,18 +121,22 @@ class _DeepSets(nn.Module):
 
         self.device = device
         self.dim = dim
-        layers_1 = [nn.Linear(self.dim, dim_hidden), nn.LeakyReLU()] + [nn.Linear(dim_hidden, dim_hidden), nn.LeakyReLU()] * (num_layers_1 - 1)
+        layers_1 = [nn.Linear(dim, dim_hidden), nn.LeakyReLU()] + [nn.Linear(dim_hidden, dim_hidden), nn.LeakyReLU()] * (num_layers_1 - 1)
         layers_2 = [nn.Linear(2 * dim_hidden, dim_hidden), nn.LeakyReLU()] + [nn.Linear(dim_hidden, dim_hidden), nn.LeakyReLU()] * (num_layers_2 - 1) + [nn.Linear(dim_hidden, num_classes), nn.LeakyReLU()]
-
         self.phi = nn.Sequential(*layers_1).to(device)
         self.rho = nn.Sequential(*layers_2).to(device)
 
-    def forward(self, features, mask):
-        h = self.phi(features)  
+    def forward(self, features, mask=None):
+
+        mask = mask.unsqueeze(-1) if mask is not None else torch.ones_like(features[..., 0]).unsqueeze(-1)
+
+        #...forward pass
+
+        h = self.phi(features)                               # shape: (batch_size, num_consts, dim_hidden)
         h_sum = (h * mask).sum(1, keepdim=False)
         h_mean = h_sum / mask.sum(1, keepdim=False)
-        h_meansum_pool = torch.cat([h_mean,h_sum], dim=1)   # sum and mean pooling shape: (N, hidden_dim)
-        f = self.rho(h_meansum_pool)                        # shape: (N, output_dim)
+        h_meansum_pool = torch.cat([h_mean, h_sum], dim=1)   # shape: (batch_size, dim_hidden)
+        f = self.rho(h_meansum_pool)                         # shape: (batch_size, num_classes)
         return f
 
 
@@ -151,8 +155,8 @@ class _MLP(nn.Module):
         self.layers = [nn.Linear(dim, dim_hidden), nn.LeakyReLU()] + [nn.Linear(dim_hidden, dim_hidden), nn.LeakyReLU()] * (num_layers - 1) + [nn.Linear(dim_hidden, num_classes), nn.LeakyReLU()]
         self.net = nn.Sequential(*self.layers).to(device)
 
-    def forward(self, x):
-        return self.net(x)
+    def forward(self, feautures):
+        return self.net(feautures)
     
 
 
