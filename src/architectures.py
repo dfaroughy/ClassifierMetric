@@ -45,7 +45,7 @@ class DeepSets(nn.Module):
         mask = batch['mask'].to(self.device)
         logits = self.forward(features, mask)
         probs = torch.nn.functional.softmax(logits, dim=1)
-        return probs 
+        return probs.detach().cpu()  
 
 class MLP(nn.Module):
     ''' Wrapper class for the MLP architecture'''
@@ -74,7 +74,7 @@ class MLP(nn.Module):
         data = batch['jet_features'].to(self.device)
         logits = self.forward(data)
         probs = torch.nn.functional.softmax(logits, dim=1)
-        return probs 
+        return probs.detach().cpu()  
 
 
 

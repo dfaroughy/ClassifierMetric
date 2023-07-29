@@ -71,9 +71,9 @@ class ModelClassifierTest:
                                                                             train_frac=self.split_fractions[0], 
                                                                             valid_frac=self.split_fractions[1], 
                                                                             shuffle=True)
-        _train_ref, _valid_ref, test_ref  = self.train_val_test_split(dataset=samples_reference, 
-                                                                      train_frac=self.split_fractions[0], 
-                                                                      valid_frac=self.split_fractions[1])
+        _, _, test_ref  = self.train_val_test_split(dataset=samples_reference, 
+                                                    train_frac=self.split_fractions[0], 
+                                                    valid_frac=self.split_fractions[1])
         test = ConcatDataset([test_models, test_ref])
 
         #...create dataloaders
