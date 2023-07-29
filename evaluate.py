@@ -9,7 +9,7 @@ from src.utils import GetConfigs
 
 from src.architectures import DeepSets as deepsets
 
-path = 'tops.DeepSets.5feats.2class.1024batch.0.0001lr__2'
+path = 'tops.DeepSets.5feats.4class.1024batch.0.0001lr__1'
 config = GetConfigs(path=path + '/configs.json')
 classifier_model = deepsets(model_config=config)
 
@@ -43,20 +43,23 @@ classifier.test()
 
 preds={}
 label = classifier.predictions[:, -1]
-preds['jetnet'] = classifier.predictions[label == 2]
-preds['flow-match_mid'] = classifier.predictions[label == 0][:preds['jetnet'].shape[0]] 
-preds['diffusion'] = classifier.predictions[label == 1][:preds['jetnet'].shape[0]] 
+preds['jetnet'] = classifier.predictions[label == -1]
+preds['flow (midpoint)'] = classifier.predictions[label == 0][:preds['jetnet'].shape[0]] 
+preds['diffusion (midpoint)'] = classifier.predictions[label == 1][:preds['jetnet'].shape[0]] 
+preds['flow (euler)'] = classifier.predictions[label == 2][:preds['jetnet'].shape[0]] 
+preds['diffusion (euler)'] = classifier.predictions[label == 3][:preds['jetnet'].shape[0]]
 save_data(preds, workdir=config.workdir, name='predictions')
 
 #...Plot classifier scores
 
 plot_class_score(test_probs=preds['jetnet'], 
-                model_probs=[preds['flow-match_mid'], preds['diffusion']],
+                model_probs=[preds['flow (midpoint)'], preds['diffusion (midpoint)'], preds['flow (euler)'], preds['diffusion (euler)']],
                 label=0,
                 workdir=config.workdir+'/results',
-                figsize=(5,5), 
+                figsize=(8,8), 
                 xlim=(1e-5,1),
-                legends=['flow-matching', 'diffusion'])
+                legends=['flow-matching (midpoint)', 'diffusion (midpoint)', 'flow-matching (euler)', 'diffusion (euler)']
+                )
 
 #...performance profiling
 
