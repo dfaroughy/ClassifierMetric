@@ -86,7 +86,7 @@ class ModelClassifierTest:
 
     def train(self):
         train = Train_Step(loss_fn=self.model.loss)
-        valid = Validation_Step(loss_fn=self.model.loss, warmup_epochs=50)
+        valid = Validation_Step(loss_fn=self.model.loss, warmup_epochs=100)
         optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)  
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, self.epochs)
 
