@@ -11,11 +11,11 @@ class ModelClassifierTest:
     def __init__(self, 
                  classifier, 
                  datasets: JetNetDataset=None,
-                 truth_label: int=None,
                  split_fractions: tuple=None,
                  epochs: int=100, 
                  lr: float=0.001, 
                  early_stopping : int=10,
+                 warmup_epochs: int=20,
                  workdir: str='./',
                  seed=12345):
     
@@ -23,12 +23,12 @@ class ModelClassifierTest:
 
         self.datasets = datasets        
         self.split_fractions = split_fractions
-        self.truth_label = truth_label
         self.model = classifier
         self.workdir = workdir
         self.lr = lr
         self.seed = seed
         self.early_stopping = early_stopping 
+        self.warmup_epochs = warmup_epochs
         self.epochs = epochs
 
     def train_val_test_split(self, dataset, train_frac, valid_frac, shuffle=False):
@@ -57,12 +57,11 @@ class ModelClassifierTest:
 
         print("INFO: building dataloaders...")
         labels = [item['label'] for item in self.datasets]
-        truth_label = np.max(labels) if self.truth_label is None else self.truth_label
-        idx_truth, idx_models = [], []
+        idx_ref, idx_models = [], []
         for i, label in enumerate(labels):
-            if label == truth_label: idx_truth.append(i)
+            if label == -1: idx_ref.append(i)
             else: idx_models.append(i)
-        samples_truth = Subset(self.datasets, idx_truth)
+        samples_reference = Subset(self.datasets, idx_ref)
         samples_models = Subset(self.datasets, idx_models)
 
         #...get training / validation / test samples   
@@ -72,10 +71,10 @@ class ModelClassifierTest:
                                                                             train_frac=self.split_fractions[0], 
                                                                             valid_frac=self.split_fractions[1], 
                                                                             shuffle=True)
-        _train_truth, _valid_truth, test_truth  = self.train_val_test_split(dataset=samples_truth, 
-                                                                            train_frac=self.split_fractions[0], 
-                                                                            valid_frac=self.split_fractions[1])
-        test = ConcatDataset([test_models, test_truth])
+        _train_ref, _valid_ref, test_ref  = self.train_val_test_split(dataset=samples_reference, 
+                                                                      train_frac=self.split_fractions[0], 
+                                                                      valid_frac=self.split_fractions[1])
+        test = ConcatDataset([test_models, test_ref])
 
         #...create dataloaders
         
@@ -86,7 +85,7 @@ class ModelClassifierTest:
 
     def train(self):
         train = Train_Step(loss_fn=self.model.loss)
-        valid = Validation_Step(loss_fn=self.model.loss, warmup_epochs=100)
+        valid = Validation_Step(loss_fn=self.model.loss, warmup_epochs=self.warmup_epochs)
         optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)  
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, self.epochs)
 

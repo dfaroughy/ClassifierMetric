@@ -32,7 +32,7 @@ class JetNetDataset(Dataset):
                  class_labels: dict=None,
                  particle_features: list=['eta_rel', 'phi_rel', 'pt_rel'],
                  preprocess : list=['standardize'],
-                 num_jets: int=100000,
+                 num_jets: int=None,
                  num_constituents: int=150,
                  remove_negative_pt: bool=False,
                  compute_jet_features: bool=False):
@@ -77,8 +77,8 @@ class JetNetDataset(Dataset):
             file_name = self.datasets[data][0]
             key = self.datasets[data][1] if len(self.datasets[data]) > 1 else None
             file_path = os.path.join(self.path, file_name)
-            if data == 'truth' and self.class_labels[data] == 0:
-                raise ValueError('Truth data must have label different from 0') 
+            if data == 'test' and self.class_labels[data] != -1:
+                raise ValueError('Test dataset must have label = -1') 
             with h5py.File(file_path, 'r') as f:
                 label = self.class_labels[data] if self.class_labels is not None else None
                 print('\t- {} ({}) label: {}'.format(file_name, key, label))
@@ -163,7 +163,7 @@ class FormatData:
                 ):
         
         self.data = data
-        self.num_jets = num_jets
+        self.num_jets = data.shape[0] if num_jets is None else num_jets
         self.num_consts = num_constituents
         self.particle_features = particle_features
         self.remove_negative_pt = remove_negative_pt
@@ -212,7 +212,7 @@ class FormatData:
     
     def trim_dataset(self):
         if self.data_rank(3): 
-            self.data = self.data[:self.num_jets, :self.num_consts, :] 
+            self.data = self.data[:self.num_jets, :self.num_consts, :]
         if self.data_rank(2): 
             self.data = self.data[:self.num_conts, :] 
 
