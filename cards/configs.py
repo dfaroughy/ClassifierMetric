@@ -9,7 +9,6 @@ class DataConfig:
                 'diff_euler'     : ['euler_200_csts.h5', 'etaphipt_frac'],
                 'jetnet150'      : ['t150.hdf5', 'particle_features']
                 }
-    
     labels = {
               'flow_midpoint'   : 0,
               'diff_midpoint'   : 1,
@@ -17,18 +16,17 @@ class DataConfig:
               'diff_euler'      : 3,
               'jetnet150'       : -1  # test dataset
               } 
-    
     features = ['eta_rel', 'phi_rel', 'pt_rel', 'R', 'e_rel']
     preprocess = ['standardize']
     
 class TrainConfig:
 
-    device = 'cpu'
+    device = 'cuda:3'
     split_fractions = [0.5, 0.2, 0.3]  # train / val / test 
     size = None 
     batch_size  = 1024
     epochs = 10000   
-    early_stopping  = 20 
-    warmup_epochs = 100    
-    lr  = 0.0001
+    early_stopping  = 30 
+    warmup_epochs = 250    
+    lr  = 0.001
     seed = 12345
