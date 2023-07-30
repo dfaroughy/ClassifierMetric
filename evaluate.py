@@ -1,3 +1,5 @@
+import sys
+
 from src.utils import save_data
 from src.plots import plot_class_score
 from src.datasets import JetNetDataset
@@ -9,9 +11,9 @@ from src.utils import GetConfigs
 
 from src.architectures import DeepSets as deepsets
 
-path = 'tops.DeepSets.5feats.4class.1024batch.0.001lr__2'
+path = sys.argv[1]
 config = GetConfigs(path=path + '/configs.json')
-classifier_model = deepsets(model_config=config)
+model = deepsets(model_config=config)
 
 ###################################################
 
@@ -25,7 +27,7 @@ datasets = JetNetDataset(dir_path = 'data/',
                         particle_features = config.features,
                         )
 
-classifier = ModelClassifierTest(classifier = classifier_model, 
+classifier = ModelClassifierTest(classifier = model, 
                                 datasets = datasets,
                                 split_fractions = config.split_fractions,
                                 epochs = config.epochs, 
@@ -60,14 +62,3 @@ plot_class_score(test_probs=preds['jetnet'],
                 xlim=(1e-5,1),
                 legends=['flow-matching (midpoint)', 'diffusion (midpoint)', 'flow-matching (euler)', 'diffusion (euler)']
                 )
-
-#...performance profiling
-
-# import cProfile, pstats, io
-# with cProfile.Profile() as pr:
-#     classifier.DataLoaders(batch_size=config.batch_size)
-#     classifier.load_model(path=path + '/best_model.pth')
-# s = io.StringIO()
-# ps = pstats.Stats(pr, stream=s).sort_stats('cumtime')
-# ps.print_stats()
-# print(s.getvalue())

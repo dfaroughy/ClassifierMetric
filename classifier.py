@@ -13,7 +13,7 @@ The classifier is trained on the generated data from each model and evaluated on
 
 from src.architectures import DeepSets as deepsets
 from cards.models import DeepSetsConfig as config
-classifier_model = deepsets(model_config=config)
+model = deepsets(model_config=config)
 
 ###################################################
 
@@ -34,7 +34,7 @@ datasets = JetNetDataset(dir_path = 'data/',
                         remove_negative_pt = True
                         ) 
 
-classifier = ModelClassifierTest(classifier = classifier_model, 
+classifier = ModelClassifierTest(classifier = model, 
                                 datasets = datasets,
                                 split_fractions = config.split_fractions,
                                 epochs = config.epochs, 
