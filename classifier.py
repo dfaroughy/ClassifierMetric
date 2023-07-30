@@ -31,6 +31,7 @@ datasets = JetNetDataset(dir_path = 'data/',
                         num_jets = config.size,
                         preprocess = config.preprocess,
                         particle_features = config.features,
+                        compute_jet_features=False,
                         remove_negative_pt = True
                         ) 
 
@@ -47,7 +48,7 @@ classifier = ModelClassifierTest(classifier = model,
 classifier.DataLoaders(batch_size=config.batch_size)
 classifier.train()
 
-#...Evaluate predictions on test datasets
+#...Evaluate predictions on test datasets (jetnet)
 
 classifier.test()
 
