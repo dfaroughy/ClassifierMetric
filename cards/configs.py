@@ -20,7 +20,7 @@ class DataConfig:
     
 class TrainConfig:
 
-    device = 'cuda:1'
+    device = 'cpu'
     split_fractions = [0.5, 0.2, 0.3]  # train / val / test 
     size = None 
     batch_size  = 1024
