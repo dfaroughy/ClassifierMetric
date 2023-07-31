@@ -44,7 +44,7 @@ class JetNetDataset(Dataset):
         return self.dataset_list[0].size(0)
 
     def get_data(self):
-        print("INFO: loading and preprocessing data from {}".format(self.path))
+        print("INFO: loading and preprocessing data...")
         data_list, label_list = [], []
         for data in list(self.datasets.keys()):
             file_name = self.datasets[data][0]
@@ -52,12 +52,12 @@ class JetNetDataset(Dataset):
             file_path = os.path.join(self.path, file_name)
             with h5py.File(file_path, 'r') as f:
                 label = self.class_labels[data] if self.class_labels is not None else None
-                print('\t- {}, file: {}, key: {}, label: {} {}'.format(data, file_name, key, label, '(test)' if label==-1 else ''))
                 dataset = torch.from_numpy(f[key][...])
                 dataset = self.apply_formatting(dataset)
                 self.summary_statistics[label] = self.summary_stats(dataset)
                 data_list.append(dataset)
                 label_list.append(torch.full((dataset.shape[0],), label))
+                print('\t- {} {}: {}  [{}, {}]  shape: {}'.format('test' if label==-1 else 'model', '' if label==-1 else label, data, file_name, key, dataset.shape))
         data_tensor = torch.cat(data_list, dim=0)
         label_tensor = torch.cat(label_list, dim=0) 
         self.summary_statistics['dataset'] = self.summary_stats(data_tensor)
