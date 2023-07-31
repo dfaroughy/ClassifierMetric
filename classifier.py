@@ -45,7 +45,7 @@ classifier = ModelClassifierTest(classifier = model,
                                 workdir = config.workdir,
                                 seed = config.seed)
 
-classifier.DataLoaders(batch_size=config.batch_size)
+classifier.dataloader(batch_size=config.batch_size)
 classifier.train()
 
 #...Evaluate classifier on test datasets
