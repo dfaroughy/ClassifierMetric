@@ -1,6 +1,6 @@
 import torch
-from torch import Tensor
 import torch.nn as nn
+import torch.nn.functional as F
 
 #################################
 '''
@@ -44,7 +44,7 @@ class DeepSets(nn.Module):
         features = batch['particle_features'].to(self.device)
         mask = batch['mask'].to(self.device)
         logits = self.forward(features, mask)
-        probs = torch.nn.functional.softmax(logits, dim=1)
+        probs = F.softmax(logits, dim=1)
         return probs.detach().cpu()  
 
 class MLP(nn.Module):
@@ -73,7 +73,7 @@ class MLP(nn.Module):
     def predict(self, batch): 
         data = batch['jet_features'].to(self.device)
         logits = self.forward(data)
-        probs = torch.nn.functional.softmax(logits, dim=1)
+        probs = F.softmax(logits, dim=1)
         return probs.detach().cpu()  
 
 
@@ -95,16 +95,12 @@ class _DeepSets(nn.Module):
         self.device = device
         self.dim = dim
         layers_1 = [nn.Linear(dim, dim_hidden), nn.LeakyReLU()] + [nn.Linear(dim_hidden, dim_hidden), nn.LeakyReLU()] * (num_layers_1 - 1)
-        layers_2 = [nn.Linear(2 * dim_hidden, dim_hidden), nn.LeakyReLU()] + [nn.Linear(dim_hidden, dim_hidden), nn.LeakyReLU()] * (num_layers_2 - 1) + [nn.Linear(dim_hidden, num_classes), nn.LeakyReLU()]
+        layers_2 = [nn.Linear(2 * dim_hidden, dim_hidden), nn.LeakyReLU()] + [nn.Linear(dim_hidden, dim_hidden), nn.LeakyReLU()] * (num_layers_2 - 2) + [nn.Linear(dim_hidden, num_classes), nn.LeakyReLU()]
         self.phi = nn.Sequential(*layers_1).to(device)
         self.rho = nn.Sequential(*layers_2).to(device)
 
     def forward(self, features, mask=None):
-
         mask = mask.unsqueeze(-1) if mask is not None else torch.ones_like(features[..., 0]).unsqueeze(-1)
-
-        #...forward pass
-
         h = self.phi(features)                               # shape: (batch_size, num_consts, dim_hidden)
         h_sum = (h * mask).sum(1, keepdim=False)
         h_mean = h_sum / mask.sum(1, keepdim=False)
