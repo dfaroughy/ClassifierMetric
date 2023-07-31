@@ -54,7 +54,7 @@ classifier.test(class_labels=config.labels)
 
 plot_class_score(predictions=classifier.predictions,
                 class_labels=config.labels,
-                reference=ref_class,
+                reference='jetnet150',
                 workdir=config.workdir+'/results',
                 figsize=(8,8), 
                 xlim=(1e-5,1)

@@ -2,7 +2,7 @@ class DataConfig:
 
     jet_type = 'tops'
     features = ['eta_rel', 'phi_rel', 'pt_rel', 'R', 'e_rel']
-    preprocess = ['normalize', 'logit_transform', 'standardize']
+    preprocess = ['standardize']
     datasets = {
                 'flow_midpoint'  : ['fm_tops150_cond_mp200nfe.h5', 'etaphipt'],
                 'diff_midpoint'  : ['midpoint_100_csts.h5', 'etaphipt_frac'],
@@ -20,12 +20,12 @@ class DataConfig:
     
 class TrainConfig:
 
-    device = 'cuda:1'
+    device = 'cuda:3'
     split_fractions = [0.5, 0.2, 0.3]  # train / val / test 
     size = None 
     batch_size  = 1024
     epochs = 10000   
     early_stopping  = 30 
-    warmup_epochs = 100    
+    warmup_epochs = 150    
     lr  = 0.001
     seed = 12345
