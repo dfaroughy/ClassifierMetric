@@ -62,7 +62,7 @@ class FormatData:
         if self.data_rank(3): 
             self.data = self.data[:self.num_jets, :self.num_consts, :]
         if self.data_rank(2): 
-            self.data = self.data[:self.num_conts, :] 
+            self.data = self.data[:self.num_jets, :] 
 
     def pt_order(self):
         for i, f in enumerate(self.particle_features):
