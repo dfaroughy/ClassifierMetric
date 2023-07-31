@@ -1,4 +1,3 @@
-import torch
 import numpy as np
 import os.path
 import shutil
@@ -68,56 +67,3 @@ def savefig(filename, extension="png"):
         unique_filename = f"{base_filename}_{counter}{ext}"
         counter += 1
     return unique_filename        
-
-def savetensor(tensor, filename, save_dir, extension="npy", use_seed=None, verbose=True):
-    
-    if use_seed is None:
-        counter = 1
-        filename = save_dir+'/'+filename 
-        base_filename, ext = os.path.splitext(filename)
-        if ext == "":
-            ext = f".{extension}"
-        unique_filename = f"{base_filename}{ext}"
-        while os.path.exists(unique_filename):
-            unique_filename = f"{base_filename}_{counter}{ext}"
-            counter += 1
-        file = '/{}'.format(unique_filename)
-        np.save(save_dir + file, tensor.cpu().detach().numpy())
-    else:
-        cuda_seed = torch.cuda.initial_seed()
-        file = '/{}_{}.npy'.format(filename, cuda_seed)
-        np.save(save_dir + file, tensor.cpu().detach().numpy())
-    if verbose:
-        print("INFO: saving {} to file -> {}".format(tensor.shape, file))
-
-def get_gpu_memory():
-    torch.cuda.empty_cache()
-    total = torch.cuda.get_device_properties(0).total_memory / (1024**3)
-    reserved = torch.cuda.memory_reserved(0) / (1024**3)
-    allocated = torch.cuda.memory_allocated(0) / (1024**3)
-    free = total - reserved
-    return {
-        'total': total,
-        'reserved': reserved,
-        'allocated': allocated,
-        'free': free
-    }
-
-def shuffle(tensor) -> torch.Tensor:
-    indices = torch.randperm(tensor.size(0))
-    return tensor[indices]
-
-def fix_global_seed(seed):
-    if seed is not None:
-        torch.manual_seed(seed) 
-        torch.cuda.manual_seed_all(seed)
-        np.random.seed(seed)
-        torch.backends.cudnn.deterministic = True  
-        torch.backends.cudnn.benchmark = False
-    else:
-        seed=torch.seed()
-        torch.manual_seed(seed) 
-        torch.cuda.manual_seed_all(seed)
-        np.random.seed(seed // 10**10)
-        torch.backends.cudnn.deterministic = False 
-        torch.backends.cudnn.benchmark = True
