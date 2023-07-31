@@ -31,6 +31,7 @@ class ModelClassifierTest:
         self.warmup_epochs = warmup_epochs
         self.epochs = epochs
 
+
     def train_val_test_split(self, dataset, train_frac, valid_frac, shuffle=False):
         assert sum(self.split_fractions) - 1.0 < 1e-3, "Split fractions do not sum to 1!"
         total_size = len(dataset)
@@ -51,10 +52,9 @@ class ModelClassifierTest:
         return train_set, valid_set, test_set
 
 
-    def DataLoaders(self, batch_size):
+    def dataloader(self, batch_size):
 
         #...split datasets into truth data / models data
-
         print("INFO: building dataloaders...")
         labels = [item['label'] for item in self.datasets]
         idx_ref, idx_models = [], []
@@ -65,7 +65,6 @@ class ModelClassifierTest:
         samples_models = Subset(self.datasets, idx_models)
 
         #...get training / validation / test samples   
-
         print("INFO: train/val/test split ratios: {}/{}/{}".format(self.split_fractions[0], self.split_fractions[1], self.split_fractions[2]))
         train_models, valid_models, test_models = self.train_val_test_split(dataset=samples_models, 
                                                                             train_frac=self.split_fractions[0], 
@@ -77,7 +76,6 @@ class ModelClassifierTest:
         test = ConcatDataset([test_models, test_ref])
 
         #...create dataloaders
-        
         self.train_loader = DataLoader(dataset=train_models, batch_size=batch_size, shuffle=True)
         self.valid_loader = DataLoader(dataset=valid_models,  batch_size=batch_size, shuffle=False)
         self.test_loader = DataLoader(dataset=test,  batch_size=batch_size, shuffle=True)
@@ -99,15 +97,17 @@ class ModelClassifierTest:
                           workdir=self.workdir): 
                 print("INFO: early stopping triggered! Reached maximum patience at {} epochs".format(epoch))
                 break
-            if epoch % 5 == 1: plot_loss(train, valid, workdir=self.workdir)
+            if epoch % 4 == 0: plot_loss(train, valid, workdir=self.workdir)
         plot_loss(train, valid, workdir=self.workdir)
 
     def load_model(self, path):
         self.model.load_state_dict(torch.load(path))
 
+
     @torch.no_grad()
-    def test(self, class_labels: dict=None, plot: bool=True):
+    def test(self, class_labels: dict=None):
         self.predictions = {}
+        self.log_posterior = {}
         temp = []
         for batch in tqdm(self.test_loader, desc="testing"):
             prob = self.model.predict(batch)
@@ -117,6 +117,7 @@ class ModelClassifierTest:
         labels = self.predictions['datasets'][:, -1] 
         for _, label in class_labels.items():
             self.predictions[label] = self.predictions['datasets'][labels == label]
+            if label != -1: self.log_posterior[label] = torch.log(self.predictions[label]).sum(dim=0)
 
 
 ############################
@@ -129,7 +130,7 @@ class Train_Step(nn.Module):
         self.loss_fn = loss_fn
         self.loss = 0
         self.epoch = 0
-        self.print_epoch = 5
+        self.print_epoch = 10
         self.losses = []
 
     def update(self, data: torch.Tensor, optimizer):
@@ -142,7 +143,7 @@ class Train_Step(nn.Module):
             optimizer.step()  
             self.loss += loss_current.detach().cpu().numpy()
         self.loss = self.loss / len(data)
-        if self.epoch % self.print_epoch  == 1:
+        if self.epoch % self.print_epoch  == 0:
             print("\t Training loss: {}".format(self.loss))
         self.losses.append(self.loss) 
 

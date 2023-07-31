@@ -17,7 +17,6 @@ model = deepsets(model_config=config)
 ref_class = 'flow_midpoint'
 ###################################################
 
-#...Load data and model 
 
 datasets = JetNetDataset(dir_path = 'data/', 
                         datasets = config.datasets,
@@ -36,11 +35,8 @@ classifier = ModelClassifierTest(classifier = model,
                                 workdir = config.workdir,
                                 seed = config.seed)
 
-classifier.DataLoaders(batch_size=config.batch_size)
+classifier.dataloader(batch_size=config.batch_size)
 classifier.load_model(path=path + '/best_model.pth')
-
-#...Evaluate classifier on test datasets
-
 classifier.test(class_labels=config.labels)
 
 plot_class_score(predictions=classifier.predictions,
@@ -50,3 +46,5 @@ plot_class_score(predictions=classifier.predictions,
                 figsize=(8,8), 
                 xlim=(1e-5,1)
                 )
+
+print(classifier.log_posterior)
