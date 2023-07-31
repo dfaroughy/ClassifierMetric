@@ -101,7 +101,7 @@ class ModelClassifierTest:
         plot_loss(train, valid, workdir=self.workdir)
 
     def load_model(self, path):
-        self.model.load_state_dict(torch.load(path))
+        self.model.load_state_dict(torch.load(path, map_location=torch.device(self.model.device)))
 
 
     @torch.no_grad()
@@ -116,8 +116,8 @@ class ModelClassifierTest:
         self.predictions['datasets'] = torch.cat(temp, dim=0) 
         labels = self.predictions['datasets'][:, -1] 
         for _, label in class_labels.items():
-            self.predictions[label] = self.predictions['datasets'][labels == label]
-            if label != -1: self.log_posterior[label] = torch.log(self.predictions[label]).sum(dim=0)
+            self.predictions[label] = self.predictions['datasets'][labels == label][:, :-1]
+            if label != -1: self.log_posterior[label] = torch.log(self.predictions[label]).mean(dim=0)
 
 
 ############################
