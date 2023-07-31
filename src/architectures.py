@@ -14,6 +14,7 @@ Possible classifier architectures:
 
 #...wrappers
 
+
 class DeepSets(nn.Module):
     ''' Wrapper class for the Deep Sets architecture'''
     def __init__(self, model_config):
