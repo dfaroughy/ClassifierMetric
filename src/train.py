@@ -106,13 +106,17 @@ class ModelClassifierTest:
         self.model.load_state_dict(torch.load(path))
 
     @torch.no_grad()
-    def test(self):
-        output = []
+    def test(self, class_labels: dict=None, plot: bool=True):
+        self.predictions = {}
+        temp = []
         for batch in tqdm(self.test_loader, desc="testing"):
             prob = self.model.predict(batch)
             res = torch.cat([prob, batch['label'].unsqueeze(-1)], dim=-1)
-            output.append(res)
-        self.predictions = torch.cat(output, dim=0) 
+            temp.append(res)
+        self.predictions['datasets'] = torch.cat(temp, dim=0) 
+        labels = self.predictions['datasets'][:, -1] 
+        for _, label in class_labels.items():
+            self.predictions[label] = self.predictions['datasets'][labels == label]
 
 
 ############################

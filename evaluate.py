@@ -14,7 +14,7 @@ from src.architectures import DeepSets as deepsets
 path = sys.argv[1]
 config = GetConfigs(path=path + '/configs.json')
 model = deepsets(model_config=config)
-
+ref_class = 'flow_midpoint'
 ###################################################
 
 #...Load data and model 
@@ -41,24 +41,12 @@ classifier.load_model(path=path + '/best_model.pth')
 
 #...Evaluate classifier on test datasets
 
-classifier.test()
+classifier.test(class_labels=config.labels)
 
-preds={}
-label = classifier.predictions[:, -1]
-preds['jetnet'] = classifier.predictions[label == -1]
-preds['flow (midpoint)'] = classifier.predictions[label == 0][:preds['jetnet'].shape[0]] 
-preds['diffusion (midpoint)'] = classifier.predictions[label == 1][:preds['jetnet'].shape[0]] 
-preds['flow (euler)'] = classifier.predictions[label == 2][:preds['jetnet'].shape[0]] 
-preds['diffusion (euler)'] = classifier.predictions[label == 3][:preds['jetnet'].shape[0]]
-save_data(preds, workdir=config.workdir, name='predictions')
-
-#...Plot classifier scores
-
-plot_class_score(test_probs=preds['jetnet'], 
-                model_probs=[preds['flow (midpoint)'], preds['diffusion (midpoint)'], preds['flow (euler)'], preds['diffusion (euler)']],
-                label=0,
+plot_class_score(predictions=classifier.predictions,
+                class_labels=config.labels,
+                reference=ref_class,
                 workdir=config.workdir+'/results',
                 figsize=(8,8), 
-                xlim=(1e-5,1),
-                legends=['flow-matching (midpoint)', 'diffusion (midpoint)', 'flow-matching (euler)', 'diffusion (euler)']
+                xlim=(1e-5,1)
                 )
