@@ -27,7 +27,8 @@ def plot_class_score(predictions: dict=None,
                      xlog=False, 
                      ylog=True,
                      density=False, 
-                     xlim=(0,1)):
+                     xlim=(0,1),
+                    legend_loc='upper left'):
 
     ref_label = class_labels[reference]
     get_name = {v: k for k, v in class_labels.items()}
@@ -49,6 +50,5 @@ def plot_class_score(predictions: dict=None,
     plt.xlabel(r'score')
     plt.xlim(xlim)
     plt.title(r'Reference class: {}'.format(reference), fontsize=12)
-    plt.legend(loc='upper left', fontsize=10)
+    plt.legend(loc=legend_loc, fontsize=10)
     plt.savefig(workdir+'/classifier_score.png')
-    plt.close()
