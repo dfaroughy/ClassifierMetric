@@ -47,10 +47,12 @@ class JetNetDataset(Dataset):
     def get_data(self):
         print("INFO: loading and preprocessing data...")
         data_list, label_list = [], []
+
         for data in list(self.datasets.keys()):
             file_name = self.datasets[data][0]
             key = self.datasets[data][1] if len(self.datasets[data]) > 1 else None
             file_path = os.path.join(self.path, file_name)
+
             with h5py.File(file_path, 'r') as f:
                 label = self.class_labels[data] if self.class_labels is not None else None
                 dataset = torch.from_numpy(f[key][...])
@@ -59,6 +61,7 @@ class JetNetDataset(Dataset):
                 data_list.append(dataset)
                 label_list.append(torch.full((dataset.shape[0],), label))
                 print('\t- {} {}: {}  [{}, {}]  shape: {}'.format('test' if label==-1 else 'model', '' if label==-1 else label, data, file_name, key, dataset.shape))
+                
         data_tensor = torch.cat(data_list, dim=0)
         label_tensor = torch.cat(label_list, dim=0) 
         self.summary_statistics['dataset'] = self.summary_stats(data_tensor)
@@ -94,6 +97,7 @@ class JetNetDataset(Dataset):
     def save(self, path):
         print("INFO: saving dataset to {}".format(path))
         torch.save(self.dataset_list, os.path.join(path, 'dataset.pth'))
+
         dataset_args = {'dir_path': self.path, 
                      'datasets': self.datasets, 
                      'class_labels': self.class_labels, 
@@ -102,6 +106,7 @@ class JetNetDataset(Dataset):
                      'num_jets': self.num_jets, 
                      'num_constituents': self.num_consts, 
                      'remove_negative_pt': self.remove_negative_pt}
+        
         with open(path+'/dataset_configs.json', 'w') as json_file:
             json.dump(dataset_args, json_file, indent=4)
 
