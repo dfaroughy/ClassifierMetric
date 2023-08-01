@@ -6,21 +6,28 @@ from src.train import ModelClassifierTest
 ''' 
 Trains a classifier to distinguish between several generative models based on particle-level features.
 The classifier is trained on the generated data from each model and evaluated on a reference dataset (JetNet).
+
+TODO fix preprocess = None case
+
 '''
 
 ###################################################
 #...Import model and load configuration cards
 
-from src.architectures import DeepSets as deepsets
-from cards.models import DeepSetsConfig as config
-model = deepsets(model_config=config)
+# from src.architectures import DeepSets as deepsets
+# from cards.models import DeepSetsConfig as config
+# model = deepsets(model_config=config)
+
+from src.architectures import ParticleNet as particlenet
+from cards.models import ParticleNetConfig as config
+model = particlenet(model_config=config)
 
 ###################################################
 
 #...Create working folders
 
 directory = '{}.{}.{}feats.{}class.{}batch.{}lr'.format(config.jet_type, config.name, config.dim_input, config.dim_output, config.batch_size, config.lr)
-config.workdir = make_dir(directory, sub_dirs=['results'], overwrite=False)
+config.workdir = make_dir(directory, sub_dirs=['results'], overwrite=True)
 save_configs(configs=[config], filename=config.workdir+'/configs.json')
 
 #...Load data and train model classifier 
@@ -51,7 +58,6 @@ classifier.train()
 #...Evaluate classifier on test datasets
 
 classifier.test(class_labels=config.labels)
-
 plot_class_score(predictions=classifier.predictions,
                 class_labels=config.labels,
                 reference='jetnet150',

@@ -58,9 +58,11 @@ class ModelClassifierTest:
         print("INFO: building dataloaders...")
         labels = [item['label'] for item in self.datasets]
         idx_ref, idx_models = [], []
+
         for i, label in enumerate(labels):
             if label == -1: idx_ref.append(i)
             else: idx_models.append(i)
+
         samples_reference = Subset(self.datasets, idx_ref)
         samples_models = Subset(self.datasets, idx_models)
 
@@ -70,9 +72,11 @@ class ModelClassifierTest:
                                                                             train_frac=self.split_fractions[0], 
                                                                             valid_frac=self.split_fractions[1], 
                                                                             shuffle=True)
+        
         _, _, test_ref  = self.train_val_test_split(dataset=samples_reference, 
                                                     train_frac=self.split_fractions[0], 
                                                     valid_frac=self.split_fractions[1])
+        
         test = ConcatDataset([test_models, test_ref])
 
         #...create dataloaders
@@ -92,11 +96,13 @@ class ModelClassifierTest:
             train.update(data=self.train_loader, optimizer=optimizer)       
             valid.update(data=self.valid_loader)
             scheduler.step() 
+
             if valid.stop(save_best=self.model,
                           early_stopping =self.early_stopping, 
                           workdir=self.workdir): 
                 print("INFO: early stopping triggered! Reached maximum patience at {} epochs".format(epoch))
                 break
+
             if epoch % 4 == 0: plot_loss(train, valid, workdir=self.workdir)
         plot_loss(train, valid, workdir=self.workdir)
 
@@ -109,12 +115,15 @@ class ModelClassifierTest:
         self.predictions = {}
         self.log_posterior = {}
         temp = []
+
         for batch in tqdm(self.test_loader, desc="testing"):
             prob = self.model.predict(batch)
             res = torch.cat([prob, batch['label'].unsqueeze(-1)], dim=-1)
             temp.append(res)
+
         self.predictions['datasets'] = torch.cat(temp, dim=0) 
         labels = self.predictions['datasets'][:, -1] 
+
         for _, label in class_labels.items():
             self.predictions[label] = self.predictions['datasets'][labels == label][:, :-1]
             if label != -1: self.log_posterior[label] = torch.log(self.predictions[label]).mean(dim=0)
@@ -136,15 +145,19 @@ class Train_Step(nn.Module):
     def update(self, data: torch.Tensor, optimizer):
         self.loss = 0
         self.epoch += 1
+
         for batch in data:
             optimizer.zero_grad()
             loss_current = self.loss_fn(batch)
             loss_current.backward()
             optimizer.step()  
             self.loss += loss_current.detach().cpu().numpy()
+
         self.loss = self.loss / len(data)
+
         if self.epoch % self.print_epoch  == 0:
             print("\t Training loss: {}".format(self.loss))
+
         self.losses.append(self.loss) 
 
 
@@ -167,9 +180,11 @@ class Validation_Step(nn.Module):
     def update(self, data: torch.Tensor):
         self.loss = 0
         self.epoch += 1
+
         for batch in data:
             loss_current = self.loss_fn(batch)
             self.loss += loss_current.detach().cpu().numpy()
+
         self.loss = self.loss / len(data)
         self.losses.append(self.loss) 
 
@@ -179,6 +194,7 @@ class Validation_Step(nn.Module):
             if self.loss < self.loss_min:
                 self.loss_min = self.loss
                 self.patience = 0
+                
                 torch.save(save_best.state_dict(), workdir + '/best_model.pth')    
             else: self.patience += 1 if self.epoch > self.warmup_epochs else 0
             if self.patience >= early_stopping: self.terminate_loop = True
