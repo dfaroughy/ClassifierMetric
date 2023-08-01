@@ -9,9 +9,9 @@ class DeepSetsConfig(TrainConfig, DataConfig):
     name = 'DeepSets'
     dim_input = len(DataConfig.features)
     dim_output = len(DataConfig.datasets) - 1
-    dim_hidden = 256   
-    num_layers_1 = 5
-    num_layers_2 = 5
+    dim_hidden = 128   
+    num_layers_1 = 3
+    num_layers_2 = 3
 
 
 ##################################################

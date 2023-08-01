@@ -60,7 +60,7 @@ classifier.train()
 classifier.test(class_labels=config.labels)
 plot_class_score(predictions=classifier.predictions,
                 class_labels=config.labels,
-                reference='jetnet150',
+                reference='flow_midpoint',
                 workdir=config.workdir+'/results',
                 figsize=(8,8), 
                 xlim=(1e-5,1)
