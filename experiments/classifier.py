@@ -1,7 +1,7 @@
 from src.utils import make_dir, save_configs, save_data
 from src.plots import plot_class_score
 from src.datasets import JetNetDataset
-from src.train import ModelClassifierTest
+from train import ModelClassifierTest
 
 ''' 
 Trains a classifier to distinguish between several generative models based on particle-level features.
@@ -18,7 +18,7 @@ TODO fix preprocess = None case
 # from cards.models import DeepSetsConfig as config
 # model = deepsets(model_config=config)
 
-from src.architectures import ParticleNet as particlenet
+from models.architectures import ParticleNet as particlenet
 from cards.models import ParticleNetConfig as config
 model = particlenet(model_config=config)
 

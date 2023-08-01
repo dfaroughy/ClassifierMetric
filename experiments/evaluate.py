@@ -3,13 +3,13 @@ import sys
 from src.utils import save_data
 from src.plots import plot_class_score
 from src.datasets import JetNetDataset
-from src.train import ModelClassifierTest
+from train import ModelClassifierTest
 from src.utils import GetConfigs
 
 ###################################################
 #...Import model and load configuration cards
 
-from src.architectures import DeepSets as deepsets
+from models.architectures import DeepSets as deepsets
 
 path = sys.argv[1]
 config = GetConfigs(path=path + '/configs.json')

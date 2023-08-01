@@ -4,7 +4,7 @@ import h5py
 import json
 from torch.utils.data import Dataset
 from src.formatdata import FormatData
-from src.preprocess import PreprocessData
+from datasets.preprocess import PreprocessData
 
 class JetNetDataset(Dataset):
 
