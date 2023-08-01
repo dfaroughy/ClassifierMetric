@@ -9,3 +9,4 @@ src/__pycache__
 data/*
 experiments/check_datasets.ipynb
 src/jetnet.py
+cards/*
