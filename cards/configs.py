@@ -23,9 +23,7 @@ class DataConfig:
               'jetnet150'       : -1  # test dataset
               } 
     
-    
 ##################################################
-
 
 @dataclass
 class TrainConfig:
