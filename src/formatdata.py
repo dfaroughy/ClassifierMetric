@@ -22,8 +22,8 @@ class FormatData:
     def format(self):
         if self.data_rank(3):  
             self.zero_padding()
-            self.get_particle_features()
             if self.remove_negative_pt: self.remove_neg_pt() 
+            self.get_particle_features()
             self.trim_dataset()
         if self.data_rank(2): 
             # TODO

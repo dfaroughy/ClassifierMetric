@@ -13,7 +13,7 @@ class JetNetDataset(Dataset):
                  datasets: dict=None,
                  class_labels: dict=None,
                  particle_features: list=['eta_rel', 'phi_rel', 'pt_rel'],
-                 preprocess : list=['standardize'],
+                 preprocess : list=None,
                  num_jets: int=None,
                  num_constituents: int=150,
                  remove_negative_pt: bool=False,
@@ -36,7 +36,7 @@ class JetNetDataset(Dataset):
         datasets, labels = self.dataset_list
         output['label'] = labels[idx]
         output['mask'] = datasets[idx][:, -1]
-        particles, jet = self.apply_preprocessing(sample=datasets[idx])  
+        particles, jet = self.apply_preprocessing(sample=datasets[idx]) if self.preprocess_methods is not None else (datasets[idx], None) 
         output['particle_features'] = particles
         if jet is not None: output['jet_features'] = jet 
         return output
