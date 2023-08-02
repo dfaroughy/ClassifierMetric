@@ -2,6 +2,7 @@
 import json
 from dataclasses import dataclass, field, asdict
 from typing import List, Dict
+from src.utils import make_dir
 
 @dataclass
 class DataConfig:
@@ -27,13 +28,14 @@ class TrainConfig:
 
     device : str = 'cpu'
     data_split_fracs : List[float] = field(default_factory = lambda : [0.5, 0.2, 0.3])  # train / val / test 
-    size : int = None 
+    size : int = None # if None, use all data
     batch_size : int = 1024
     epochs : int = 10000   
     early_stopping : int = 30 
     warmup_epochs : int = 100    
     lr : float = 0.001
     seed : int = 12345
+
 
 
 @dataclass
@@ -47,11 +49,14 @@ class DeepSetsConfig(TrainConfig, DataConfig):
     dim_hidden : int = 128   
     num_layers_1 : int = 3
     num_layers_2 : int = 3
+    mkdir : bool = True
 
     def __post_init__(self):
         super().__post_init__()
         self.dim_input = len(self.features)
         self.dim_output = len(self.datasets) - 1
+        if self.mkdir:
+            self.workdir = make_dir('results/{}.{}'.format(self.data_name, self.model_name), overwrite=False)
 
     def save(self, path):
         with open(path, 'w') as f: json.dump(asdict(self), f, indent=4)
@@ -79,6 +84,7 @@ class ParticleNetConfig(TrainConfig, DataConfig):
 
     def __post_init__(self):
         super().__post_init__()
+
         self.dim_input = len(self.features)
         self.dim_output = len(self.datasets) - 1
 

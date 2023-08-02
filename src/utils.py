@@ -2,7 +2,6 @@ import numpy as np
 import os.path
 import shutil
 import itertools
-import json
 
 def make_dir(path, overwrite=False, sub_dirs=False, verbose=True):  
     Directory = path
@@ -26,16 +25,6 @@ def make_dir(path, overwrite=False, sub_dirs=False, verbose=True):
         print(info)
         print("#"+"="*len(info))
     return Directory
-
-
-class GetConfigs:
-    def __init__(self, path):
-        with open(path, 'r') as f:
-            params = json.load(f)
-        config_key, config = list(params.items())[0]
-        self.config_key = config_key
-        for key, value in config.items():
-            setattr(self, key, value)
 
 def save_data(samples: dict, name: str, workdir : str, verbose: bool = True):
     for key in samples.keys():
