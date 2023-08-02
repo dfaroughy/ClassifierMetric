@@ -3,10 +3,10 @@ from ClassifierMetric.datamodule.datasets import JetNetDataset
 from ClassifierMetric.datamodule.dataloaders import JetNetDataLoader
 from ClassifierMetric.trainer import ModelClassifierTest
 
-from ClassifierMetric.models.particlenet import ParticleNet
-from ClassifierMetric.configs.particlenet_config import ParticleNetConfig as Config
+from ClassifierMetric.models.deepsets import DeepSets
+from ClassifierMetric.configs.deepsets_config import DeepSetsConfig as Config
 
-config = Config(features    = ['eta_rel', 'phi_rel', 'pt_rel', 'e_rel', 'R'],
+config = Config(features    = ['eta_rel', 'phi_rel', 'pt_rel', 'e_rel',  'R'],
                 preprocess  = ['standardize'],
                 datasets    = {'flow_midpoint' : ['fm_tops150_cond_mp200nfe.h5', 'etaphipt'],
                                'diff_midpoint' : ['midpoint_100_csts.h5', 'etaphipt_frac'],
@@ -17,24 +17,24 @@ config = Config(features    = ['eta_rel', 'phi_rel', 'pt_rel', 'e_rel', 'R'],
                                'flow_euler' : 2,
                                'diff_euler' : 3},
                 data_split_fracs = [0.5, 0.2, 0.3],
-                epochs = 10000,
-                warmup_epochs=150,
-                device = 'cuda:0'
+                epochs = 1000,
+                num_constituents = 30,
+                device = 'cpu'
                 )
 
-particlenet = ParticleNet(model_config=config)
-config.save(path=config.workdir + '/configs.json')
-datasets = JetNetDataset(dir_path = '../data/', 
+deepset = DeepSets(model_config=config)
+config.save(path=config.workdir+'/configs.json')
+datasets = JetNetDataset(dir_path = '../../data/', 
                         datasets = config.datasets,
                         class_labels = config.labels,
-                        num_jets = config.size,
+                        num_jets = config.num_jets,
+                        num_constituents = config.num_constituents,
                         preprocess = config.preprocess,
                         particle_features = config.features,
-                        compute_jet_features=False,
                         remove_negative_pt = True
                         ) 
 dataloader = JetNetDataLoader(datasets=datasets, data_split_fracs=config.data_split_fracs, batch_size=config.batch_size)
-classifier = ModelClassifierTest(classifier = particlenet, 
+classifier = ModelClassifierTest(classifier = deepset, 
                                 dataloader = dataloader,
                                 epochs = config.epochs, 
                                 lr = config.lr, 

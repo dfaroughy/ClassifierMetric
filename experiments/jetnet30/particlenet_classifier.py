@@ -3,8 +3,8 @@ from ClassifierMetric.datamodule.datasets import JetNetDataset
 from ClassifierMetric.datamodule.dataloaders import JetNetDataLoader
 from ClassifierMetric.trainer import ModelClassifierTest
 
-from ClassifierMetric.models.deepsets import DeepSets
-from ClassifierMetric.configs.deepsets_config import DeepSetsConfig as Config
+from ClassifierMetric.models.particlenet import ParticleNet
+from ClassifierMetric.configs.particlenet_config import ParticleNetConfig as Config
 
 config = Config(features    = ['eta_rel', 'phi_rel', 'pt_rel', 'e_rel',  'R'],
                 preprocess  = ['standardize'],
@@ -18,11 +18,12 @@ config = Config(features    = ['eta_rel', 'phi_rel', 'pt_rel', 'e_rel',  'R'],
                                'diff_euler' : 3},
                 data_split_fracs = [0.5, 0.2, 0.3],
                 epochs = 1000,
+                num_constituents = 30,
                 device = 'cpu'
                 )
 
-deepset = DeepSets(model_config=config)
-config.save(path=config.workdir+'/configs.json')
+particlenet = ParticleNet(model_config=config)
+config.save(path=config.workdir + '/configs.json')
 datasets = JetNetDataset(dir_path = '../../data/', 
                         datasets = config.datasets,
                         class_labels = config.labels,
@@ -33,7 +34,7 @@ datasets = JetNetDataset(dir_path = '../../data/',
                         remove_negative_pt = True
                         ) 
 dataloader = JetNetDataLoader(datasets=datasets, data_split_fracs=config.data_split_fracs, batch_size=config.batch_size)
-classifier = ModelClassifierTest(classifier = deepset, 
+classifier = ModelClassifierTest(classifier = particlenet, 
                                 dataloader = dataloader,
                                 epochs = config.epochs, 
                                 lr = config.lr, 
