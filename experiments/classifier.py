@@ -19,7 +19,7 @@ TODO fix preprocess = None case
 # model = deepsets(model_config=config)
 
 from models.architectures import ParticleNet as particlenet
-from cards.models import ParticleNetConfig as config
+from configs.models import ParticleNetConfig as config
 model = particlenet(model_config=config)
 
 ###################################################
