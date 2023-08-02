@@ -19,7 +19,7 @@ config = Config(features    = ['eta_rel', 'phi_rel', 'pt_rel',  'R'],
 
 deepset = DeepSets(model_config=config)
 config.save(path=config.workdir+'/configs.json')
-datasets = JetNetDataset(dir_path = 'data/', 
+datasets = JetNetDataset(dir_path = '../data/', 
                         datasets = config.datasets,
                         class_labels = config.labels,
                         num_jets = config.size,
