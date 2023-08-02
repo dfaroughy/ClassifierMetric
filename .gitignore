@@ -1,4 +1,4 @@
-experiments/tops.DeepSets.*
+results/tops.DeepSets.*
 tops.MLP.*
 tops.ParticleNet.*
 .DS_Store
