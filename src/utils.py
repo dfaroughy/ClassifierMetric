@@ -27,18 +27,6 @@ def make_dir(path, overwrite=False, sub_dirs=False, verbose=True):
         print("#"+"="*len(info))
     return Directory
 
-def save_configs(configs, filename, verbose=True):
-    class_attributes = {}
-    for cls in configs:
-        attributes = {}
-        for base in reversed(cls.__mro__):
-            attributes.update(vars(base))
-        attributes = {k: v for k, v in attributes.items() if not (k.startswith('__') or callable(v))}
-        class_attributes[cls.__name__] = attributes
-    with open(filename, 'w') as f:
-        json.dump(class_attributes, f, indent=4)
-    if verbose:
-        print("INFO: saved model configs to {}".format(filename))
 
 class GetConfigs:
     def __init__(self, path):
