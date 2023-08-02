@@ -1,9 +1,10 @@
-from src.utils import make_dir
+import sys
+sys.path.append('/Users/dario/Dropbox/PROJECTS/ML/JetData/ClassifierMetric')
+
 from src.plots import plot_class_score
 from src.datamodule.datasets import JetNetDataset
 from src.datamodule.dataloaders import JetNetDataLoader
 from src.trainer import ModelClassifierTest
-
 
 ''' 
 Trains a classifier to distinguish between several generative models based on particle-level features.
@@ -25,12 +26,13 @@ config = Config(features    = ['eta_rel', 'phi_rel', 'pt_rel',  'R'],
                                 'diff_midpoint' : ['midpoint_100_csts.h5', 'etaphipt_frac']},
                 labels      = {'flow_midpoint' : 0, 'diff_midpoint' : 1},
                 data_split_fracs = [0.5, 0.2, 0.3],
-                size = 100000,
-                epochs = 5,
+                size = 10000,
+                epochs = 10,
                 dim_hidden  = 128,   
                 num_layers_1 = 2,
                 num_layers_2 = 3,
-                device = 'cpu'
+                device = 'cpu',
+                mkdir = True
                 )
 
 model = DeepSets(model_config=config)
@@ -38,14 +40,7 @@ model = DeepSets(model_config=config)
 ###################################################
 
 
-#...create working dir in results/
-
-directory = '{}.{}.{}feats.{}class.{}batch'.format(config.data_name, config.model_name, config.dim_input, config.dim_output, config.batch_size)
-config.workdir = make_dir('results/' + directory, overwrite=True)
 config.save(path=config.workdir+'/configs.json')
-
-#...definte datasets, dataloader and classifier model
-
 datasets = JetNetDataset(dir_path = 'data/', 
                         datasets = config.datasets,
                         class_labels = config.labels,
@@ -71,8 +66,8 @@ if __name__=="__main__":
     classifier.test(class_labels=config.labels)
 
     plot_class_score(predictions=classifier.predictions,
-                    class_labels=config.labels,
-                    reference='flow_midpoint',
-                    figsize=(8,8), 
-                    xlim=(1e-5,1),
-                    workdir=config.workdir)
+                     class_labels=config.labels,
+                     reference='flow_midpoint',
+                     figsize=(8,8), 
+                     xlim=(1e-5,1),
+                     workdir=config.workdir)
