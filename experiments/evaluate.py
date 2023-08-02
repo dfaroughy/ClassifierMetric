@@ -1,20 +1,19 @@
 import sys
 from src.plots import plot_class_score
 from src.datamodule.datasets import JetNetDataset
-from trainer import ModelClassifierTest
-from src.utils import GetConfigs
+from src.datamodule.dataloaders import JetNetDataLoader
+from src.trainer import ModelClassifierTest
 
 ###################################################
-#...Import model and load configuration cards
 
-from models.architectures import DeepSets as deepsets
+from config.configs import DeepSetsConfig
+from src.models.deepsets import DeepSets
 
-path = sys.argv[1]
-config = GetConfigs(path=path + '/configs.json')
-model = deepsets(model_config=config)
-ref_class = 'flow_midpoint'
-###################################################
+config = DeepSetsConfig.load(path=sys.argv[1] + '/configs.json')
+config.workdir = sys.argv[1]
+model = DeepSets(model_config=config)
 
+#...definte datasets, dataloader and classifier model
 
 datasets = JetNetDataset(dir_path = 'data/', 
                         datasets = config.datasets,
@@ -22,27 +21,30 @@ datasets = JetNetDataset(dir_path = 'data/',
                         num_jets = config.size,
                         preprocess = config.preprocess,
                         particle_features = config.features,
-                        )
+                        compute_jet_features=False,
+                        remove_negative_pt = True
+                        ) 
+dataloader = JetNetDataLoader(datasets=datasets, data_split_fracs=config.data_split_fracs, batch_size=config.batch_size)
 
 classifier = ModelClassifierTest(classifier = model, 
-                                datasets = datasets,
-                                split_fractions = config.split_fractions,
+                                dataloader = dataloader,
                                 epochs = config.epochs, 
                                 lr = config.lr, 
                                 early_stopping = config.early_stopping,
+                                warmup_epochs = config.warmup_epochs,
                                 workdir = config.workdir,
                                 seed = config.seed)
 
-classifier.dataloader(batch_size=config.batch_size)
-classifier.load_model(path=path + '/best_model.pth')
-classifier.test(class_labels=config.labels)
+if __name__=="__main__":
 
-plot_class_score(predictions=classifier.predictions,
-                class_labels=config.labels,
-                reference=ref_class,
-                workdir=config.workdir+'/results',
-                figsize=(8,8), 
-                xlim=(1e-5,1)
-                )
+    classifier.load_model(path=config.workdir + '/best_model.pth')
+    classifier.test(class_labels=config.labels)     
 
-print(classifier.log_posterior)
+    plot_class_score(predictions=classifier.predictions,
+                    class_labels=config.labels,
+                    reference='flow_midpoint',
+                    figsize=(8,8), 
+                    xlim=(1e-5,1),
+                    workdir=config.workdir)
+    
+    print(classifier.predictions)
