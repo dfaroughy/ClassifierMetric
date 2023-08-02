@@ -2,14 +2,19 @@ import torch
 import torch.nn as nn
 import numpy as np
 from tqdm.auto import tqdm
+import os
+from torch.utils.data import DataLoader
+
+from torch.utils.tensorboard.writer import SummaryWriter
 from src.plots import plot_loss
 from src.datamodule.dataloaders import JetNetDataLoader
+
 
 class ModelClassifierTest:
 
     def __init__(self, 
                  classifier, 
-                 dataloader: JetNetDataLoader=None,
+                 dataloader: JetNetDataLoader,
                  epochs: int=100, 
                  lr: float=0.001, 
                  early_stopping : int=10,
@@ -27,6 +32,9 @@ class ModelClassifierTest:
         self.early_stopping = early_stopping 
         self.warmup_epochs = warmup_epochs
         self.epochs = epochs
+        os.makedirs(self.workdir+'/tensorboard', exist_ok=True)
+        self.writer = SummaryWriter(self.workdir+'/tensorboard')  # tensorboard writer
+
 
     def train(self):
         train = Train_Step(loss_fn=self.model.loss)
@@ -36,9 +44,12 @@ class ModelClassifierTest:
 
         print('INFO: number of training parameters: {}'.format(sum(p.numel() for p in self.model.parameters())))
         for epoch in tqdm(range(self.epochs), desc="epochs"):
-            train.update(data=self.dataloader.train_loader, optimizer=optimizer)       
-            valid.update(data=self.dataloader.valid_loader)
+            train.update(dataloader=self.dataloader.train_loader, optimizer=optimizer)       
+            valid.update(dataloader=self.dataloader.valid_loader)
             scheduler.step() 
+            
+            self.writer.add_scalar('Loss/train', train.loss, epoch)
+            self.writer.add_scalar('Loss/valid', valid.loss, epoch)
 
             if valid.stop(save_best=self.model,
                           early_stopping =self.early_stopping, 
@@ -46,15 +57,16 @@ class ModelClassifierTest:
                 print("INFO: early stopping triggered! Reached maximum patience at {} epochs".format(epoch))
                 break
 
-            if epoch % 4 == 0: plot_loss(train, valid, workdir=self.workdir)
+            # if epoch % 4 == 0: plot_loss(train, valid, workdir=self.workdir)
         plot_loss(train, valid, workdir=self.workdir)
+        self.writer.close() 
 
     def load_model(self, path):
         self.model.load_state_dict(torch.load(path, map_location=torch.device(self.model.device)))
 
 
     @torch.no_grad()
-    def test(self, class_labels: dict=None):
+    def test(self, class_labels: dict):
         self.predictions = {}
         self.log_posterior = {}
         temp = []
@@ -85,18 +97,18 @@ class Train_Step(nn.Module):
         self.print_epoch = 10
         self.losses = []
 
-    def update(self, data: torch.Tensor, optimizer):
+    def update(self, dataloader: DataLoader, optimizer):
         self.loss = 0
         self.epoch += 1
 
-        for batch in data:
+        for batch in dataloader:
             optimizer.zero_grad()
             loss_current = self.loss_fn(batch)
             loss_current.backward()
             optimizer.step()  
             self.loss += loss_current.detach().cpu().numpy()
 
-        self.loss = self.loss / len(data)
+        self.loss = self.loss / len(dataloader.dataset)
 
         if self.epoch % self.print_epoch  == 0:
             print("\t Training loss: {}".format(self.loss))
@@ -120,15 +132,15 @@ class Validation_Step(nn.Module):
         self.losses = []
 
     @torch.no_grad()
-    def update(self, data: torch.Tensor):
+    def update(self, dataloader: DataLoader):
         self.loss = 0
         self.epoch += 1
 
-        for batch in data:
+        for batch in dataloader:
             loss_current = self.loss_fn(batch)
             self.loss += loss_current.detach().cpu().numpy()
 
-        self.loss = self.loss / len(data)
+        self.loss = self.loss / len(dataloader.dataset)
         self.losses.append(self.loss) 
 
     @torch.no_grad()

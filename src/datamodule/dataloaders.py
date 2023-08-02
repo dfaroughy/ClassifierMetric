@@ -6,8 +6,8 @@ from src.datamodule.datasets import JetNetDataset
 class JetNetDataLoader:
 
     def __init__(self, 
-                 datasets: JetNetDataset=None, 
-                 data_split_fracs: list=None,
+                 datasets: JetNetDataset, 
+                 data_split_fracs: list=[0.5, 0.2, 0.3],
                  batch_size: int=1024 
                  ):
 
@@ -72,6 +72,10 @@ class JetNetDataLoader:
 
         #...create dataloaders
 
-        self.train_loader = DataLoader(dataset=train_models, batch_size=self.batch_size, shuffle=True)
-        self.valid_loader = DataLoader(dataset=valid_models,  batch_size=self.batch_size, shuffle=False)
-        self.test_loader = DataLoader(dataset=test,  batch_size=self.batch_size, shuffle=True)
+        self.train = DataLoader(dataset=train_models, batch_size=self.batch_size, shuffle=True)
+        self.valid = DataLoader(dataset=valid_models,  batch_size=self.batch_size, shuffle=False)
+        self.test = DataLoader(dataset=test,  batch_size=self.batch_size, shuffle=True)
+
+        print('INFO: train size: {}, validation size: {}, testing sizes: {}'.format(len(self.train.dataset), 
+                                                                                    len(self.valid.dataset), 
+                                                                                    len(self.test.dataset)))
