@@ -29,7 +29,7 @@ class TrainConfig:
     device : str = 'cpu'
     data_split_fracs : List[float] = field(default_factory = lambda : [0.5, 0.2, 0.3])  # train / val / test 
     batch_size : int = 1024
-    epochs : int = 10000   
+    epochs : int = 1000  
     early_stopping : int = 30 
     warmup_epochs : int = 100    
     lr : float = 0.001

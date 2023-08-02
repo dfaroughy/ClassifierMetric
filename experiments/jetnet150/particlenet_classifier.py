@@ -17,7 +17,8 @@ config = Config(features    = ['eta_rel', 'phi_rel', 'pt_rel', 'e_rel',  'R'],
                                'flow_euler' : 2,
                                'diff_euler' : 3},
                 data_split_fracs = [0.5, 0.2, 0.3],
-                epochs = 1000,
+                epochs = 10,
+                num_jets = 10000,
                 device = 'cpu'
                 )
 
