@@ -1,7 +1,7 @@
 import json
 from dataclasses import dataclass, asdict
 from ClassifierMetric.utils import make_dir
-from ClassifierMetric.configs.main_configs import TrainConfig, DataConfig
+from ClassifierMetric.configs.base_configs import TrainConfig, DataConfig
 
 @dataclass
 class DeepSetsConfig(TrainConfig, DataConfig):
