@@ -21,6 +21,5 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="git@github.com:dfaroughy/ClassifierMetric.git",
     packages=setuptools.find_packages("src"),
-    package_dir={"": "src"},
-    python_requires=">=3.7",
-)
+    package_dir={"": "src"}
+    )
