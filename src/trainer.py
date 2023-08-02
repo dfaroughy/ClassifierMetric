@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 import numpy as np
-# from torch.utils.data import DataLoader, Subset, ConcatDataset
 from tqdm.auto import tqdm
 from src.plots import plot_loss
 from src.datamodule.dataloaders import JetNetDataLoader
@@ -21,9 +20,7 @@ class ModelClassifierTest:
         super(ModelClassifierTest, self).__init__()
 
         self.model = classifier
-        self.train_loader = dataloader.train_loader
-        self.valid_loader = dataloader.valid_loader
-        self.test_loader = dataloader.test_loader
+        self.dataloader = dataloader
         self.workdir = workdir
         self.lr = lr
         self.seed = seed
@@ -39,8 +36,8 @@ class ModelClassifierTest:
 
         print('INFO: number of training parameters: {}'.format(sum(p.numel() for p in self.model.parameters())))
         for epoch in tqdm(range(self.epochs), desc="epochs"):
-            train.update(data=self.train_loader, optimizer=optimizer)       
-            valid.update(data=self.valid_loader)
+            train.update(data=self.dataloader.train_loader, optimizer=optimizer)       
+            valid.update(data=self.dataloader.valid_loader)
             scheduler.step() 
 
             if valid.stop(save_best=self.model,
@@ -62,7 +59,7 @@ class ModelClassifierTest:
         self.log_posterior = {}
         temp = []
 
-        for batch in tqdm(self.test_loader, desc="testing"):
+        for batch in tqdm(self.dataloader.test_loader, desc="testing"):
             prob = self.model.predict(batch)
             res = torch.cat([prob, batch['label'].unsqueeze(-1)], dim=-1)
             temp.append(res)
