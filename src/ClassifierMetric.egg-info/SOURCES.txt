@@ -1,5 +1,0 @@
-setup.py
-src/ClassifierMetric.egg-info/PKG-INFO
-src/ClassifierMetric.egg-info/SOURCES.txt
-src/ClassifierMetric.egg-info/dependency_links.txt
-src/ClassifierMetric.egg-info/top_level.txt
