@@ -2,6 +2,7 @@ from ClassifierMetric.plots import plot_class_score
 from ClassifierMetric.datamodule.datasets import JetNetDataset
 from ClassifierMetric.datamodule.dataloaders import JetNetDataLoader
 from ClassifierMetric.trainer import ModelClassifierTest
+
 from ClassifierMetric.models.particlenet import ParticleNet
 from ClassifierMetric.configs.particlenet_config import ParticleNetConfig as Config
 

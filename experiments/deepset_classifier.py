@@ -2,6 +2,7 @@ from ClassifierMetric.plots import plot_class_score
 from ClassifierMetric.datamodule.datasets import JetNetDataset
 from ClassifierMetric.datamodule.dataloaders import JetNetDataLoader
 from ClassifierMetric.trainer import ModelClassifierTest
+
 from ClassifierMetric.models.deepsets import DeepSets
 from ClassifierMetric.configs.deepsets_config import DeepSetsConfig as Config
 
