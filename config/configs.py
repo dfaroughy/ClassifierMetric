@@ -81,12 +81,14 @@ class ParticleNetConfig(TrainConfig, DataConfig):
     num_layers_1 : int = 3
     num_layers_2 : int = 3
     dropout : float = 0.1
+    mkdir : bool = True
 
     def __post_init__(self):
         super().__post_init__()
-
-        self.dim_input = len(self.features)
+        self.dim_input = len(self.features) - 2
         self.dim_output = len(self.datasets) - 1
+        if self.mkdir:
+            self.workdir = make_dir('results/{}.{}'.format(self.data_name, self.model_name), overwrite=False)
 
     def save(self, path):
         with open(path, 'w') as f:
@@ -107,11 +109,14 @@ class MLPConfig(TrainConfig, DataConfig):
     dim_output : int = 2
     dim_hidden : int = 128 
     num_layers : int = 3 
+    mkdir : bool = True
 
     def __post_init__(self):
         super().__post_init__()
         self.dim_input = len(self.features)
         self.dim_output = len(self.datasets) - 1
+        if self.mkdir:
+            self.workdir = make_dir('results/{}.{}'.format(self.data_name, self.model_name), overwrite=False)
 
     def save(self, path):
         with open(path, 'w') as f:

@@ -1,20 +1,18 @@
 import sys
+sys.path.append('/Users/dario/Dropbox/PROJECTS/ML/JetData/ClassifierMetric')
+
 from src.plots import plot_class_score
 from src.datamodule.datasets import JetNetDataset
 from src.datamodule.dataloaders import JetNetDataLoader
 from src.trainer import ModelClassifierTest
+from config.configs import ParticleNetConfig
+from src.models.particlenet import ParticleNet
 
-###################################################
+workdir = sys.argv[1]
+config = ParticleNetConfig.load(path=workdir + '/configs.json')
+config.workdir = workdir
 
-from config.configs import DeepSetsConfig
-from src.models.deepsets import DeepSets
-
-config = DeepSetsConfig.load(path=sys.argv[1] + '/configs.json')
-config.workdir = sys.argv[1]
-model = DeepSets(model_config=config)
-
-#...definte datasets, dataloader and classifier model
-
+model = ParticleNet(model_config=config)
 datasets = JetNetDataset(dir_path = 'data/', 
                         datasets = config.datasets,
                         class_labels = config.labels,
@@ -25,7 +23,6 @@ datasets = JetNetDataset(dir_path = 'data/',
                         remove_negative_pt = True
                         ) 
 dataloader = JetNetDataLoader(datasets=datasets, data_split_fracs=config.data_split_fracs, batch_size=config.batch_size)
-
 classifier = ModelClassifierTest(classifier = model, 
                                 dataloader = dataloader,
                                 epochs = config.epochs, 
