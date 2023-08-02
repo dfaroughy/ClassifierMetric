@@ -6,16 +6,20 @@ from ClassifierMetric.trainer import ModelClassifierTest
 from ClassifierMetric.models.particlenet import ParticleNet
 from ClassifierMetric.configs.particlenet_config import ParticleNetConfig as Config
 
-config = Config(features    = ['eta_rel', 'phi_rel', 'pt_rel',  'R'],
+config = Config(features    = ['eta_rel', 'phi_rel', 'pt_rel', 'e_rel', 'R'],
                 preprocess  = ['standardize'],
                 datasets    = {'flow_midpoint' : ['fm_tops150_cond_mp200nfe.h5', 'etaphipt'],
-                                'diff_midpoint' : ['midpoint_100_csts.h5', 'etaphipt_frac']},
-                labels      = {'flow_midpoint' : 0, 'diff_midpoint' : 1},
+                               'diff_midpoint' : ['midpoint_100_csts.h5', 'etaphipt_frac'],
+                               'flow_euler' : ['fm_tops150_cond_eu200nfe.h5', 'etaphipt'],
+                               'diff_euler' : ['euler_200_csts.h5', 'etaphipt_frac']},
+                labels      = {'flow_midpoint' : 0, 
+                               'diff_midpoint' : 1,
+                               'flow_euler' : 2,
+                               'diff_euler' : 3},
                 data_split_fracs = [0.5, 0.2, 0.3],
-                size = 10000,
-                epochs = 10,
-                device = 'cpu',
-                mkdir = True
+                epochs = 10000,
+                warmup_epochs=150,
+                device = 'cuda:0'
                 )
 
 particlenet = ParticleNet(model_config=config)
