@@ -1,7 +1,7 @@
 
 import torch
 from torch.utils.data import DataLoader, Subset, ConcatDataset
-from ClassifierMetric.datamodule.datasets import JetNetDataset
+from ClassifierMetric.datamodules.jetnet.datasets import JetNetDataset
 
 class JetNetDataLoader:
 

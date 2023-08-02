@@ -1,6 +1,6 @@
 import json
 from dataclasses import dataclass, asdict
-from ClassifierMetric.utils import make_dir
+from ClassifierMetric.utils.utils import make_dir
 from ClassifierMetric.configs.base_configs import TrainConfig, DataConfig
 
 @dataclass
@@ -19,7 +19,7 @@ class DeepSetsConfig(TrainConfig, DataConfig):
         self.dim_input = len(self.features)
         self.dim_output = len(self.datasets) - 1
         if self.mkdir:
-            self.workdir = make_dir('results/{}.{}'.format(self.data_name, self.model_name), overwrite=False)
+            self.workdir = make_dir('../../results/{}.{}'.format(self.data_name, self.model_name), overwrite=False)
 
     def save(self, path):
         with open(path, 'w') as f: json.dump(asdict(self), f, indent=4)

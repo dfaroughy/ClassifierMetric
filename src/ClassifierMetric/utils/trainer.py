@@ -6,8 +6,8 @@ import os
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard.writer import SummaryWriter
 
-from ClassifierMetric.plots import plot_loss
-from ClassifierMetric.datamodule.dataloaders import JetNetDataLoader
+from ClassifierMetric.utils.plots import plot_loss
+from ClassifierMetric.datamodules.jetnet.dataloaders import JetNetDataLoader
 
 class ModelClassifierTest:
 
