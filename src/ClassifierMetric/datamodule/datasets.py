@@ -3,8 +3,8 @@ import os
 import h5py
 import json
 from torch.utils.data import Dataset
-from src.datamodule.format import FormatData
-from src.datamodule.preprocess import PreprocessData
+from ClassifierMetric.datamodule.format import FormatData
+from ClassifierMetric.datamodule.preprocess import PreprocessData
 
 class JetNetDataset(Dataset):
 

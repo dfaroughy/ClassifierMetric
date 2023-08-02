@@ -1,12 +1,9 @@
-# import sys
-# sys.path.append('/Users/dario/Dropbox/PROJECTS/ML/JetData/ClassifierMetric')
-
-from src.plots import plot_class_score
-from src.datamodule.datasets import JetNetDataset
-from src.datamodule.dataloaders import JetNetDataLoader
-from src.trainer import ModelClassifierTest
-from src.models.deepsets import DeepSets
-from config.configs import DeepSetsConfig as Config
+from ClassifierMetric.plots import plot_class_score
+from ClassifierMetric.datamodule.datasets import JetNetDataset
+from ClassifierMetric.datamodule.dataloaders import JetNetDataLoader
+from ClassifierMetric.trainer import ModelClassifierTest
+from ClassifierMetric.models.deepsets import DeepSets
+from ClassifierMetric.configs.deepsets_config import DeepSetsConfig as Config
 
 config = Config(features    = ['eta_rel', 'phi_rel', 'pt_rel',  'R'],
                 preprocess  = ['standardize'],

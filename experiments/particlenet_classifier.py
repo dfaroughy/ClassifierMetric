@@ -1,12 +1,9 @@
-# import sys
-# sys.path.append('/Users/dario/Dropbox/PROJECTS/ML/JetData/ClassifierMetric')
-
-from src.plots import plot_class_score
-from src.datamodule.datasets import JetNetDataset
-from src.datamodule.dataloaders import JetNetDataLoader
-from src.trainer import ModelClassifierTest
-from src.models.particlenet import ParticleNet
-from config.configs import ParticleNetConfig as Config
+from ClassifierMetric.plots import plot_class_score
+from ClassifierMetric.datamodule.datasets import JetNetDataset
+from ClassifierMetric.datamodule.dataloaders import JetNetDataLoader
+from ClassifierMetric.trainer import ModelClassifierTest
+from ClassifierMetric.models.particlenet import ParticleNet
+from ClassifierMetric.configs.particlenet_config import ParticleNetConfig as Config
 
 config = Config(features    = ['eta_rel', 'phi_rel', 'pt_rel',  'R'],
                 preprocess  = ['standardize'],
@@ -22,7 +19,7 @@ config = Config(features    = ['eta_rel', 'phi_rel', 'pt_rel',  'R'],
 
 particlenet = ParticleNet(model_config=config)
 config.save(path=config.workdir + '/configs.json')
-datasets = JetNetDataset(dir_path = 'data/', 
+datasets = JetNetDataset(dir_path = '../data/', 
                         datasets = config.datasets,
                         class_labels = config.labels,
                         num_jets = config.size,
