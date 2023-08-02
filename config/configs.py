@@ -26,7 +26,7 @@ class DataConfig:
 class TrainConfig:
 
     device : str = 'cpu'
-    split_fractions : List[float] = field(default_factory = lambda : [0.5, 0.2, 0.3])  # train / val / test 
+    data_split_fracs : List[float] = field(default_factory = lambda : [0.5, 0.2, 0.3])  # train / val / test 
     size : int = None 
     batch_size : int = 1024
     epochs : int = 10000   
@@ -54,8 +54,12 @@ class DeepSetsConfig(TrainConfig, DataConfig):
         self.dim_output = len(self.datasets) - 1
 
     def save(self, path):
-        with open(path, 'w') as f:
-            json.dump(asdict(self), f, indent=4)
+        with open(path, 'w') as f: json.dump(asdict(self), f, indent=4)
+
+    @classmethod
+    def load(cls, path: str):
+        with open(path, 'r') as json_file: data = json.load(json_file)
+        return cls(**data)
 
 @dataclass
 class ParticleNetConfig(TrainConfig, DataConfig):
