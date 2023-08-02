@@ -10,7 +10,9 @@ class DataConfig:
     preprocess : List[str] = field(default_factory = lambda : ['standardize'])
     datasets   : Dict[str, List[str]] = field(default_factory = lambda: {'jetnet150': ['t150.hdf5', 'particle_features']})
     labels : Dict[str, int] = field(default_factory = lambda:  {'jetnet150': -1} )
-    
+    num_jets : int = 1000000 
+    num_constituents : int = 150
+
     def __post_init__(self):
         coords = ['eta_rel', 'phi_rel']
         self.features = [feature for feature in coords if feature not in self.features] + self.features
@@ -26,7 +28,6 @@ class TrainConfig:
 
     device : str = 'cpu'
     data_split_fracs : List[float] = field(default_factory = lambda : [0.5, 0.2, 0.3])  # train / val / test 
-    size : int = None # if None, use all data
     batch_size : int = 1024
     epochs : int = 10000   
     early_stopping : int = 30 

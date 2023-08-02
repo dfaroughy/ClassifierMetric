@@ -12,10 +12,8 @@ config = Config(features    = ['eta_rel', 'phi_rel', 'pt_rel',  'R'],
                                 'diff_midpoint' : ['midpoint_100_csts.h5', 'etaphipt_frac']},
                 labels      = {'flow_midpoint' : 0, 'diff_midpoint' : 1},
                 data_split_fracs = [0.5, 0.2, 0.3],
-                size = 10000,
                 epochs = 10,
-                device = 'cpu',
-                mkdir = True
+                device = 'cpu'
                 )
 
 deepset = DeepSets(model_config=config)
@@ -23,7 +21,8 @@ config.save(path=config.workdir+'/configs.json')
 datasets = JetNetDataset(dir_path = '../data/', 
                         datasets = config.datasets,
                         class_labels = config.labels,
-                        num_jets = config.size,
+                        num_jets = config.num_jets,
+                        num_constituents=config.num_constituents
                         preprocess = config.preprocess,
                         particle_features = config.features,
                         compute_jet_features=False,
