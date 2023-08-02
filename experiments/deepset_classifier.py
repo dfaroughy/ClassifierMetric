@@ -5,20 +5,8 @@ from src.plots import plot_class_score
 from src.datamodule.datasets import JetNetDataset
 from src.datamodule.dataloaders import JetNetDataLoader
 from src.trainer import ModelClassifierTest
-
-''' 
-Trains a classifier to distinguish between several generative models based on particle-level features.
-The classifier is trained on the generated data from each model and evaluated on a reference dataset (JetNet).
-
-TODO fix preprocess = None case
-TODO fix paths for src, data, results
-
-'''
-
-###################################################
-
-from config.configs import DeepSetsConfig as Config
 from src.models.deepsets import DeepSets
+from config.configs import DeepSetsConfig as Config
 
 config = Config(features    = ['eta_rel', 'phi_rel', 'pt_rel',  'R'],
                 preprocess  = ['standardize'],
@@ -28,18 +16,11 @@ config = Config(features    = ['eta_rel', 'phi_rel', 'pt_rel',  'R'],
                 data_split_fracs = [0.5, 0.2, 0.3],
                 size = 10000,
                 epochs = 10,
-                dim_hidden  = 128,   
-                num_layers_1 = 2,
-                num_layers_2 = 3,
                 device = 'cpu',
                 mkdir = True
                 )
 
-model = DeepSets(model_config=config)
-
-###################################################
-
-
+deepset = DeepSets(model_config=config)
 config.save(path=config.workdir+'/configs.json')
 datasets = JetNetDataset(dir_path = 'data/', 
                         datasets = config.datasets,
@@ -51,7 +32,7 @@ datasets = JetNetDataset(dir_path = 'data/',
                         remove_negative_pt = True
                         ) 
 dataloader = JetNetDataLoader(datasets=datasets, data_split_fracs=config.data_split_fracs, batch_size=config.batch_size)
-classifier = ModelClassifierTest(classifier = model, 
+classifier = ModelClassifierTest(classifier = deepset, 
                                 dataloader = dataloader,
                                 epochs = config.epochs, 
                                 lr = config.lr, 
