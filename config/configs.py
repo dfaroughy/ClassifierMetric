@@ -86,6 +86,11 @@ class ParticleNetConfig(TrainConfig, DataConfig):
         with open(path, 'w') as f:
             json.dump(asdict(self), f, indent=4)
 
+    @classmethod
+    def load(cls, path: str):
+        with open(path, 'r') as json_file: data = json.load(json_file)
+        return cls(**data)
+    
 @dataclass
 class MLPConfig(TrainConfig, DataConfig):
 
@@ -105,3 +110,8 @@ class MLPConfig(TrainConfig, DataConfig):
     def save(self, path):
         with open(path, 'w') as f:
             json.dump(asdict(self), f, indent=4)
+
+    @classmethod
+    def load(cls, path: str):
+        with open(path, 'r') as json_file: data = json.load(json_file)
+        return cls(**data)
