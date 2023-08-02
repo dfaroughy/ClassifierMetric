@@ -12,14 +12,15 @@ try:
     with open("README.md", "r") as f:
         long_description = f.read()
 except:
-    long_description = "# gen_model_classifier"
+    long_description = "# Multi-model classifier test"
 
 setuptools.setup(
-    name="graph_bridges",
+    name="ClassifierMetric",
     version=1.0,
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="git@github.com:dfaroughy/ClassifierMetric.git",
     packages=setuptools.find_packages("src"),
-    package_dir={"": "src"}
+    package_dir={"": "src"},
+    python_requires=">=3.7",
 )

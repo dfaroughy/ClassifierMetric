@@ -7,4 +7,5 @@ experiments/__pycache__
 experiments/check_datasets.ipynb
 src/datamodule/jetnet.py
 results/*
+ClassifierMetric.egg-info
 

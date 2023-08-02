@@ -1,5 +1,5 @@
-import sys
-sys.path.append('/Users/dario/Dropbox/PROJECTS/ML/JetData/ClassifierMetric')
+# import sys
+# sys.path.append('/Users/dario/Dropbox/PROJECTS/ML/JetData/ClassifierMetric')
 
 from src.plots import plot_class_score
 from src.datamodule.datasets import JetNetDataset
