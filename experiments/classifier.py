@@ -1,6 +1,3 @@
-import sys
-sys.path.append('/Users/dario/Dropbox/PROJECTS/ML/JetData/ClassifierMetric')
-
 from src.utils import make_dir
 from src.plots import plot_class_score
 from src.datamodule.datasets import JetNetDataset
@@ -18,7 +15,6 @@ TODO fix paths for src, data, results
 '''
 
 ###################################################
-#...Import model and load configuration cards
 
 from config.configs import DeepSetsConfig as Config
 from src.models.deepsets import DeepSets
@@ -41,37 +37,35 @@ model = DeepSets(model_config=config)
 
 ###################################################
 
+
+#...create working dir in results/
+
 directory = '{}.{}.{}feats.{}class.{}batch'.format(config.data_name, config.model_name, config.dim_input, config.dim_output, config.batch_size)
-config.workdir = make_dir('results/' + directory, sub_dirs=['results'], overwrite=True)
+config.workdir = make_dir('results/' + directory, overwrite=True)
+config.save(path=config.workdir+'/configs.json')
+
+#...definte datasets, dataloader and classifier model
+
+datasets = JetNetDataset(dir_path = 'data/', 
+                        datasets = config.datasets,
+                        class_labels = config.labels,
+                        num_jets = config.size,
+                        preprocess = config.preprocess,
+                        particle_features = config.features,
+                        compute_jet_features=False,
+                        remove_negative_pt = True
+                        ) 
+dataloader = JetNetDataLoader(datasets=datasets, data_split_fracs=config.data_split_fracs, batch_size=config.batch_size)
+classifier = ModelClassifierTest(classifier = model, 
+                                dataloader = dataloader,
+                                epochs = config.epochs, 
+                                lr = config.lr, 
+                                early_stopping = config.early_stopping,
+                                warmup_epochs = config.warmup_epochs,
+                                workdir = config.workdir,
+                                seed = config.seed)
 
 if __name__=="__main__":
-
-    config.save(path=config.workdir+'/configs.json')
-
-    datasets = JetNetDataset(dir_path = 'data/', 
-                            datasets = config.datasets,
-                            class_labels = config.labels,
-                            num_jets = config.size,
-                            preprocess = config.preprocess,
-                            particle_features = config.features,
-                            compute_jet_features=False,
-                            remove_negative_pt = True
-                            ) 
-
-    dataloader = JetNetDataLoader(datasets=datasets,
-                                  data_split_fracs=config.data_split_fracs,
-                                  batch_size=config.batch_size)
-
-    classifier = ModelClassifierTest(classifier = model, 
-                                    dataloader = dataloader,
-                                    epochs = config.epochs, 
-                                    lr = config.lr, 
-                                    early_stopping = config.early_stopping,
-                                    warmup_epochs = config.warmup_epochs,
-                                    workdir = config.workdir,
-                                    seed = config.seed)
-
-    #...train and evaluate classifier on test datasets
 
     classifier.train()
     classifier.test(class_labels=config.labels)
