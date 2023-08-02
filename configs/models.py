@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from cards.configs import DataConfig, TrainConfig
+from configs.configs import DataConfig, TrainConfig
 
 ##################################################
 
