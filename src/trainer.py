@@ -1,17 +1,16 @@
 import torch
 import torch.nn as nn
 import numpy as np
-from torch.utils.data import DataLoader, Subset, ConcatDataset
+# from torch.utils.data import DataLoader, Subset, ConcatDataset
 from tqdm.auto import tqdm
 from src.plots import plot_loss
-from src.datasets import JetNetDataset
+from src.datamodule.dataloaders import JetNetDataLoader
 
 class ModelClassifierTest:
 
     def __init__(self, 
                  classifier, 
-                 datasets: JetNetDataset=None,
-                 split_fractions: tuple=None,
+                 dataloader: JetNetDataLoader=None,
                  epochs: int=100, 
                  lr: float=0.001, 
                  early_stopping : int=10,
@@ -21,69 +20,16 @@ class ModelClassifierTest:
     
         super(ModelClassifierTest, self).__init__()
 
-        self.datasets = datasets        
-        self.split_fractions = split_fractions
         self.model = classifier
+        self.train_loader = dataloader.train_loader
+        self.valid_loader = dataloader.valid_loader
+        self.test_loader = dataloader.test_loader
         self.workdir = workdir
         self.lr = lr
         self.seed = seed
         self.early_stopping = early_stopping 
         self.warmup_epochs = warmup_epochs
         self.epochs = epochs
-
-
-    def train_val_test_split(self, dataset, train_frac, valid_frac, shuffle=False):
-        assert sum(self.split_fractions) - 1.0 < 1e-3, "Split fractions do not sum to 1!"
-        total_size = len(dataset)
-        train_size = int(total_size * train_frac)
-        valid_size = int(total_size * valid_frac)
-        
-        #...define splitting indices
-        idx = torch.randperm(total_size) if shuffle else torch.arange(total_size)
-        idx_train = idx[:train_size]
-        idx_valid = idx[train_size : train_size + valid_size]
-        idx_test = idx[train_size + valid_size :]
-        
-        #...Create Subset for each split
-        train_set = Subset(dataset, idx_train)
-        valid_set = Subset(dataset, idx_valid)
-        test_set = Subset(dataset, idx_test)
-
-        return train_set, valid_set, test_set
-
-
-    def dataloader(self, batch_size):
-
-        #...split datasets into truth data / models data
-        print("INFO: building dataloaders...")
-        labels = [item['label'] for item in self.datasets]
-        idx_ref, idx_models = [], []
-
-        for i, label in enumerate(labels):
-            if label == -1: idx_ref.append(i)
-            else: idx_models.append(i)
-
-        samples_reference = Subset(self.datasets, idx_ref)
-        samples_models = Subset(self.datasets, idx_models)
-
-        #...get training / validation / test samples   
-        print("INFO: train/val/test split ratios: {}/{}/{}".format(self.split_fractions[0], self.split_fractions[1], self.split_fractions[2]))
-        train_models, valid_models, test_models = self.train_val_test_split(dataset=samples_models, 
-                                                                            train_frac=self.split_fractions[0], 
-                                                                            valid_frac=self.split_fractions[1], 
-                                                                            shuffle=True)
-        
-        _, _, test_ref  = self.train_val_test_split(dataset=samples_reference, 
-                                                    train_frac=self.split_fractions[0], 
-                                                    valid_frac=self.split_fractions[1])
-        
-        test = ConcatDataset([test_models, test_ref])
-
-        #...create dataloaders
-        self.train_loader = DataLoader(dataset=train_models, batch_size=batch_size, shuffle=True)
-        self.valid_loader = DataLoader(dataset=valid_models,  batch_size=batch_size, shuffle=False)
-        self.test_loader = DataLoader(dataset=test,  batch_size=batch_size, shuffle=True)
-
 
     def train(self):
         train = Train_Step(loss_fn=self.model.loss)

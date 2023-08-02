@@ -1,9 +1,7 @@
 import sys
-
-from src.utils import save_data
 from src.plots import plot_class_score
-from src.datasets import JetNetDataset
-from train import ModelClassifierTest
+from src.datamodule.datasets import JetNetDataset
+from trainer import ModelClassifierTest
 from src.utils import GetConfigs
 
 ###################################################
