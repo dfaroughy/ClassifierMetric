@@ -24,9 +24,13 @@ config = Config(features    = ['eta_rel', 'phi_rel', 'pt_rel', 'e_rel',  'R'],
                 epochs = 1000,
                 batch_size = 1024,
                 warmup_epochs= 100,
-                dim_hidden = 128, 
-                num_knn  = 16,
-                device = 'cuda:2'
+                dim_hidden = 256, 
+                num_knn  = 8,
+                dim_conv_1 = 64,
+                dim_conv_2 = 128,
+                num_layers_1 = 2,
+                num_layers_2 = 2,
+                device = 'cuda:3'
                 )
 
 particlenet = ParticleNet(model_config=config)
