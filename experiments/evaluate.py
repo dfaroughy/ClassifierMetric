@@ -1,25 +1,24 @@
-# import sys
-# sys.path.append('/Users/dario/Dropbox/PROJECTS/ML/JetData/ClassifierMetric')
+import sys
+from ClassifierMetric.utils.plots import plot_class_score
+from ClassifierMetric.datamodules.jetnet.datasets import JetNetDataset
+from ClassifierMetric.datamodules.jetnet.dataloaders import JetNetDataLoader
+from ClassifierMetric.utils.trainer import ModelClassifierTest
 
-from ClassifierMetric.plots import plot_class_score
-from src.datamodule.datasets import JetNetDataset
-from src.datamodule.dataloaders import JetNetDataLoader
-from src.trainer import ModelClassifierTest
-from config.configs import ParticleNetConfig
-from src.models.particlenet import ParticleNet
+from ClassifierMetric.models.particlenet import ParticleNet
+from ClassifierMetric.configs.particlenet_config import ParticleNetConfig
 
 workdir = sys.argv[1]
 config = ParticleNetConfig.load(path=workdir + '/configs.json')
 config.workdir = workdir
 
 model = ParticleNet(model_config=config)
-datasets = JetNetDataset(dir_path = 'data/', 
+datasets = JetNetDataset(dir_path = '/home/df630/ClassifierMetric/data/', 
                         datasets = config.datasets,
                         class_labels = config.labels,
-                        num_jets = config.size,
+                        num_jets = config.num_jets,
+                        num_constituents = config.num_constituents,
                         preprocess = config.preprocess,
                         particle_features = config.features,
-                        compute_jet_features=False,
                         remove_negative_pt = True
                         ) 
 dataloader = JetNetDataLoader(datasets=datasets, data_split_fracs=config.data_split_fracs, batch_size=config.batch_size)
