@@ -1,7 +1,7 @@
 import json
 import os
 from dataclasses import dataclass, asdict
-from ClassifierMetric.utils.utils import make_dir
+from ClassifierMetric.utils.utils import make_dir, print_table
 from ClassifierMetric.configs.base_configs import TrainConfig, DataConfig
 
 @dataclass
@@ -21,7 +21,7 @@ class ParticleNetConfig(TrainConfig, DataConfig):
 
     def __post_init__(self):
         super().__post_init__()
-        self.dim_input = len(self.features) - 2
+        self.dim_input = len(self.features) - 2  # subtract (eta, phi)
         self.dim_output = len(self.datasets) - 1
         if self.mkdir:
             self.workdir = make_dir('/home/df630/ClassifierMetric/results/{}.{}'.format(self.data_name, self.model_name), overwrite=False)
@@ -33,4 +33,6 @@ class ParticleNetConfig(TrainConfig, DataConfig):
     @classmethod
     def load(cls, path: str):
         with open(path, 'r') as json_file: data = json.load(json_file)
+        print_table(data)
+        data['mkdir'] = False
         return cls(**data)
