@@ -8,20 +8,25 @@ from ClassifierMetric.configs.particlenet_config import ParticleNetConfig as Con
 
 config = Config(features    = ['eta_rel', 'phi_rel', 'pt_rel', 'e_rel',  'R'],
                 preprocess  = ['standardize'],
-                datasets    = {'flow_midpoint' : ['fm_tops150_cond_mp200nfe.h5', 'etaphipt'],
-                               'diff_midpoint' : ['midpoint_100_csts.h5', 'etaphipt_frac'],
-                               'flow_euler' : ['fm_tops150_cond_eu200nfe.h5', 'etaphipt'],
-                               'diff_euler' : ['euler_200_csts.h5', 'etaphipt_frac']
-                               },
-                labels      = {'flow_midpoint' : 0, 
-                               'diff_midpoint' : 1,
-                               'flow_euler' : 2,
-                               'diff_euler' : 3
-                            },
+                datasets    = {
+                              'flow_midpoint' : ['fm_tops150_cond_mp200nfe.h5', 'etaphipt'],
+                              'diff_midpoint' : ['midpoint_100_csts.h5', 'etaphipt_frac'],
+                              'flow_euler' :    ['fm_tops150_cond_eu200nfe.h5', 'etaphipt'],
+                              'diff_euler' :    ['euler_200_csts.h5', 'etaphipt_frac'] 
+                              },
+                    labels  = {
+                              'flow_midpoint' : 0, 
+                              'diff_midpoint' : 1,
+                              'flow_euler' : 2,
+                              'diff_euler' : 3
+                              },
                 data_split_fracs = [0.6, 0.1, 0.3],
                 epochs = 1000,
-                warmup_epochs= 150,
-                device = 'cuda:3'
+                batch_size = 1024,
+                warmup_epochs= 100,
+                dim_hidden = 128, 
+                num_knn  = 16,
+                device = 'cuda:2'
                 )
 
 particlenet = ParticleNet(model_config=config)
@@ -44,7 +49,7 @@ classifier = ModelClassifierTest(classifier = particlenet,
                                 warmup_epochs = config.warmup_epochs,
                                 workdir = config.workdir,
                                 seed = config.seed)
-5
+
 if __name__=="__main__":
 
     classifier.train()
@@ -53,6 +58,7 @@ if __name__=="__main__":
     plot_class_score(predictions=classifier.predictions,
                      class_labels=config.labels,
                      reference='flow_midpoint',
+                     title=config.model_name, 
                      figsize=(8,8), 
                      xlim=(1e-5,1),
                      workdir=config.workdir)
