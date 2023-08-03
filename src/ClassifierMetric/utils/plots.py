@@ -18,6 +18,7 @@ def plot_loss(train,
 
 def plot_class_score(predictions: dict=None,
                      class_labels: dict=None,
+                     title: str=None,
                      workdir: str=None, 
                      reference: str=None,
                      figsize=(4,4), 
@@ -49,6 +50,6 @@ def plot_class_score(predictions: dict=None,
                      label=get_name[label]) 
     plt.xlabel(r'score')
     plt.xlim(xlim)
-    plt.title(r'Reference class: {}'.format(reference), fontsize=12)
+    plt.title('{}'.format(title), fontsize=12)
     plt.legend(loc=legend_loc, fontsize=10)
     plt.savefig(workdir+'/classifier_score.png')
