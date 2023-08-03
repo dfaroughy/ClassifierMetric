@@ -70,7 +70,7 @@ class _ParticleNet(nn.Module):
 
         self.use_fts_bn = use_fts_bn
         if self.use_fts_bn:
-            self.bn_fts = nn.BatchNorm1d(dim_features)
+            self.bn_fts = nn.BatchNorm1d(dim_features).to(device)
 
         self.use_counts = use_counts
 
@@ -84,7 +84,7 @@ class _ParticleNet(nn.Module):
         if self.use_fusion:
             in_chn = sum(x[-1] for _, x in conv_params)
             out_chn = np.clip((in_chn // 128) * 128, 128, 1024)
-            self.fusion_block = nn.Sequential(nn.Conv1d(in_chn, out_chn, kernel_size=1, bias=False), nn.BatchNorm1d(out_chn), nn.ReLU())
+            self.fusion_block = nn.Sequential(nn.Conv1d(in_chn, out_chn, kernel_size=1, bias=False), nn.BatchNorm1d(out_chn), nn.ReLU()).to(device)
 
         self.for_segmentation = for_segmentation
 
@@ -97,14 +97,14 @@ class _ParticleNet(nn.Module):
                 in_chn = fc_params[idx - 1][0]
             if self.for_segmentation:
                 fcs.append(nn.Sequential(nn.Conv1d(in_chn, channels, kernel_size=1, bias=False),
-                                         nn.BatchNorm1d(channels), nn.ReLU(), nn.Dropout(drop_rate)))
+                                         nn.BatchNorm1d(channels), nn.ReLU(), nn.Dropout(drop_rate).to(device)))
             else:
-                fcs.append(nn.Sequential(nn.Linear(in_chn, channels), nn.ReLU(), nn.Dropout(drop_rate)))
+                fcs.append(nn.Sequential(nn.Linear(in_chn, channels), nn.ReLU(), nn.Dropout(drop_rate)).to(device))
         if self.for_segmentation:
             fcs.append(nn.Conv1d(fc_params[-1][0], num_classes, kernel_size=1))
         else:
             fcs.append(nn.Linear(fc_params[-1][0], num_classes))
-        self.fc = nn.Sequential(*fcs)
+        self.fc = nn.Sequential(*fcs).to(device)
 
         self.for_inference = for_inference
 
@@ -172,23 +172,23 @@ class EdgeConvBlock(nn.Module):
 
         self.convs = nn.ModuleList()
         for i in range(self.num_layers):
-            self.convs.append(nn.Conv2d(2 * in_feat if i == 0 else out_feats[i - 1], out_feats[i], kernel_size=1, bias=False if self.batch_norm else True))
+            self.convs.append(nn.Conv2d(2 * in_feat if i == 0 else out_feats[i - 1], out_feats[i], kernel_size=1, bias=False if self.batch_norm else True).to(device))
 
         if batch_norm:
             self.bns = nn.ModuleList()
             for i in range(self.num_layers):
-                self.bns.append(nn.BatchNorm2d(out_feats[i]))
+                self.bns.append(nn.BatchNorm2d(out_feats[i]).to(device))
 
         if activation:
-            self.acts = nn.ModuleList()
+            self.acts = nn.ModuleList().to(device)
             for i in range(self.num_layers):
                 self.acts.append(nn.ReLU())
 
         if in_feat == out_feats[-1]:
             self.sc = None
         else:
-            self.sc = nn.Conv1d(in_feat, out_feats[-1], kernel_size=1, bias=False)
-            self.sc_bn = nn.BatchNorm1d(out_feats[-1])
+            self.sc = nn.Conv1d(in_feat, out_feats[-1], kernel_size=1, bias=False).to(device)
+            self.sc_bn = nn.BatchNorm1d(out_feats[-1]).to(device)
 
         if activation:
             self.sc_act = nn.ReLU()

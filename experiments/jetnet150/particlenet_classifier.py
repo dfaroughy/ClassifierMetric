@@ -11,20 +11,22 @@ config = Config(features    = ['eta_rel', 'phi_rel', 'pt_rel', 'e_rel',  'R'],
                 datasets    = {'flow_midpoint' : ['fm_tops150_cond_mp200nfe.h5', 'etaphipt'],
                                'diff_midpoint' : ['midpoint_100_csts.h5', 'etaphipt_frac'],
                                'flow_euler' : ['fm_tops150_cond_eu200nfe.h5', 'etaphipt'],
-                               'diff_euler' : ['euler_200_csts.h5', 'etaphipt_frac']},
+                               'diff_euler' : ['euler_200_csts.h5', 'etaphipt_frac']
+                               },
                 labels      = {'flow_midpoint' : 0, 
                                'diff_midpoint' : 1,
                                'flow_euler' : 2,
-                               'diff_euler' : 3},
-                data_split_fracs = [0.5, 0.2, 0.3],
-                epochs = 10,
-                num_jets = 10000,
-                device = 'cpu'
+                               'diff_euler' : 3
+                            },
+                data_split_fracs = [0.6, 0.1, 0.3],
+                epochs = 1000,
+                warmup_epochs= 150,
+                device = 'cuda:3'
                 )
 
 particlenet = ParticleNet(model_config=config)
 config.save(path=config.workdir + '/configs.json')
-datasets = JetNetDataset(dir_path = '../../data/', 
+datasets = JetNetDataset(dir_path = '/home/df630/ClassifierMetric/data/', 
                         datasets = config.datasets,
                         class_labels = config.labels,
                         num_jets = config.num_jets,
@@ -42,7 +44,7 @@ classifier = ModelClassifierTest(classifier = particlenet,
                                 warmup_epochs = config.warmup_epochs,
                                 workdir = config.workdir,
                                 seed = config.seed)
-
+5
 if __name__=="__main__":
 
     classifier.train()

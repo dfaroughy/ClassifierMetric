@@ -10,7 +10,7 @@ class DeepSetsConfig(TrainConfig, DataConfig):
     dim_input  : int = 2 
     dim_output : int = 2
     dim_hidden : int = 128   
-    num_layers_1 : int = 3
+    num_layers_1 : int = 2
     num_layers_2 : int = 3
     mkdir : bool = True
 

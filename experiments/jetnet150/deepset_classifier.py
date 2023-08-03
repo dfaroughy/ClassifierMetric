@@ -18,7 +18,7 @@ config = Config(features    = ['eta_rel', 'phi_rel', 'pt_rel', 'e_rel',  'R'],
                                'diff_euler' : 3},
                 data_split_fracs = [0.5, 0.2, 0.3],
                 epochs = 1000,
-                device = 'cpu'
+                device = 'cuda:0'
                 )
 
 deepset = DeepSets(model_config=config)
