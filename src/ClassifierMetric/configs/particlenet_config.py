@@ -27,12 +27,14 @@ class ParticleNetConfig(TrainConfig, DataConfig):
             self.workdir = make_dir('/home/df630/ClassifierMetric/results/{}.{}'.format(self.data_name, self.model_name), overwrite=False)
 
     def save(self, path):
+        config = asdict(self)
+        print_table(config)
         with open(path, 'w') as f:
-            json.dump(asdict(self), f, indent=4)
+            json.dump(config, f, indent=4)
 
     @classmethod
     def load(cls, path: str):
-        with open(path, 'r') as json_file: data = json.load(json_file)
-        print_table(data)
-        data['mkdir'] = False
-        return cls(**data)
+        with open(path, 'r') as json_file: config = json.load(json_file)
+        print_table(config)
+        config['mkdir'] = False
+        return cls(**config)
