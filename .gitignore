@@ -7,4 +7,4 @@ experiments/__pycache__
 experiments/check_datasets.ipynb
 src/ClassifierMetric/datamodule/jetnet.py
 results/*
-
+results_old/*
