@@ -14,7 +14,7 @@ config = Config(features    = ['eta_rel', 'phi_rel', 'pt_rel', 'e_rel',  'R'],
                               'flow_euler' :    ['fm_tops30_cond_eu200nfe.h5', 'etaphipt'],
                               'diff_euler' :    ['diff_tops30_cond_euler_200_csts.h5', 'etaphipt_frac'],
                               'diff_ddim' :     ['diff_tops30_cond_ddim_200_csts.h5', 'etaphipt_frac'] ,
-                              'jetnet30' :     ['t.hdf5', 'particle_features']
+                              'jetnet30' :      ['t.hdf5', 'particle_features']
                               },
                     labels  = {
                               'flow_midpoint' : 0, 
@@ -24,11 +24,11 @@ config = Config(features    = ['eta_rel', 'phi_rel', 'pt_rel', 'e_rel',  'R'],
                               'diff_ddim' : 4,
                               'jetnet30' : -1, # test data
                               },
-                data_split_fracs = [0.5, 0.2, 0.3],
+                data_split_fracs = [0.6, 0.1, 0.3],
                 epochs = 1000,
-                num_constituents = 30,
-                device = 'cpu'
+                device = 'cuda:0'
                 )
+
 
 if __name__=="__main__":
 
@@ -58,6 +58,7 @@ if __name__=="__main__":
     plot_class_score(predictions=classifier.predictions,
                      class_labels=config.labels,
                      reference='flow_midpoint',
+                     title=config.model_name, 
                      figsize=(8,8), 
                      xlim=(1e-5,1),
                      workdir=config.workdir)
