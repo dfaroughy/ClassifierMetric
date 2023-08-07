@@ -27,19 +27,20 @@ config = Config(features    = ['eta_rel', 'phi_rel', 'pt_rel', 'e_rel',  'R'],
                               'jetnet30' : -1, # test data
                               },
                 data_split_fracs = [0.6, 0.1, 0.3],
+                num_constituents=30,
                 epochs = 1000,
                 batch_size = 1024,
                 warmup_epochs= 50,
                 dim_hidden = 256, 
-                num_knn  = 16,
+                num_knn  = 10,
                 dim_conv_1 = 64,
                 dim_conv_2 = 64,
-                num_layers_1 = 2,
-                num_layers_2 = 2,
-                device = 'cuda:3'
+                num_layers_1 = 3,
+                num_layers_2 = 3,
+                device = 'cuda:2'
                 )
 
-if __name__=="__main__":
+if __name__ == "__main__":
 
     particlenet = ParticleNet(model_config=config)
     config.save(path=config.workdir + '/configs.json')
