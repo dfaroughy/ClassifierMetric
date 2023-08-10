@@ -3,41 +3,39 @@ from ClassifierMetric.datamodules.jetnet.datasets import JetNetDataset
 from ClassifierMetric.datamodules.jetnet.dataloaders import JetNetDataLoader
 from ClassifierMetric.utils.trainer import ModelClassifierTest
 
-from ClassifierMetric.models.deepsets import DeepSets
-from ClassifierMetric.configs.deepsets_config import DeepSetsConfig as Config
+# configs 
+
+from ClassifierMetric.models.particlenet import ParticleNet
+from ClassifierMetric.configs.particlenet_config import ParticleNetConfig as Config
 
 config = Config(features    = ['eta_rel', 'phi_rel', 'pt_rel', 'e_rel',  'R'],
                 preprocess  = ['standardize'],
                 datasets    = {
-                              'flow_midpoint' : ['fm_tops30_mp200nfe.h5', 'etaphipt'],
-                              'diff_midpoint' : ['diff_tops30_midpoint_100_csts.h5', 'etaphipt_frac'],
-                              'flow_euler' :    ['fm_tops30_eu200nfe.h5', 'etaphipt'],
-                              'diff_euler' :    ['diff_tops30_euler_200_csts.h5', 'etaphipt_frac'],
-                              'diff_em' :       ['diff_tops30_em_200_csts.h5', 'etaphipt_frac'] ,
-                              'jetnet30' :      ['t.hdf5', 'particle_features']
+                              'flow_midpoint' : ['fm_tops150_cond_mp200nfe.h5', 'etaphipt'],
+                              'flow_euler' : ['fm_tops150_cond_eu200nfe.h5', 'etaphipt'],
+                              'jetnet150' :  s['t150.hdf5', 'particle_features']
                               },
                     labels  = {
                               'flow_midpoint' : 0, 
-                              'diff_midpoint' : 1,
-                              'flow_euler' : 2,
-                              'diff_euler' : 3,
-                              'diff_em' : 4,
-                              'jetnet30' : -1 # test data
+                              'flow_euler' : 1,
+                              'jetnet150' : -1 # test data
                               },
                 data_split_fracs = [0.6, 0.1, 0.3],
                 epochs = 1000,
-                num_constituents=30,
-                batch_size = 2048,
+                batch_size = 512,
                 warmup_epochs= 50,
-                dim_hidden = 128, 
+                dim_hidden = 256, 
+                num_knn  = 7,
+                dim_conv_1 = 32,
+                dim_conv_2 = 64,
                 num_layers_1 = 3,
                 num_layers_2 = 3,
-                device = 'cuda:1'
+                device = 'cuda:2'
                 )
 
-if __name__=="__main__":
+if __name__ == "__main__":
 
-    deepset = DeepSets(model_config=config)
+    particlenet = ParticleNet(model_config=config)
     config.save(path=config.workdir + '/configs.json')
     datasets = JetNetDataset(dir_path = '/home/df630/ClassifierMetric/data/', 
                             datasets = config.datasets,
@@ -49,7 +47,7 @@ if __name__=="__main__":
                             remove_negative_pt = True
                             ) 
     dataloader = JetNetDataLoader(datasets=datasets, data_split_fracs=config.data_split_fracs, batch_size=config.batch_size)
-    classifier = ModelClassifierTest(classifier = deepset, 
+    classifier = ModelClassifierTest(classifier = particlenet, 
                                     dataloader = dataloader,
                                     epochs = config.epochs, 
                                     lr = config.lr, 

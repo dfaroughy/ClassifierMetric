@@ -14,7 +14,7 @@ config = Config(features    = ['eta_rel', 'phi_rel', 'pt_rel', 'e_rel',  'R'],
                               'flow_euler' :    ['fm_tops30_cond_eu200nfe.h5', 'etaphipt'],
                               'diff_euler' :    ['diff_tops30_cond_euler_200_csts.h5', 'etaphipt_frac'],
                               'diff_em' :     ['diff_tops30_cond_em_200_csts.h5', 'etaphipt_frac'] ,
-                              'diff_ddim' :     ['diff_tops30_cond_ddim_200_csts.h5', 'etaphipt_frac'] ,
+                            #   'diff_ddim' :     ['diff_tops30_cond_ddim_200_csts.h5', 'etaphipt_frac'] ,
                               'jetnet30' :     ['t.hdf5', 'particle_features']
                               },
                     labels  = {
@@ -23,13 +23,13 @@ config = Config(features    = ['eta_rel', 'phi_rel', 'pt_rel', 'e_rel',  'R'],
                               'flow_euler' : 2,
                               'diff_euler' : 3,
                               'diff_em' : 4,
-                               'diff_ddim' : 5,
+                            #    'diff_ddim' : 5,
                               'jetnet30' : -1 # test data
                               },
                 data_split_fracs = [0.6, 0.1, 0.3],
                 epochs = 1000,
                 num_constituents=30,
-                batch_size = 2048,
+                batch_size = 1028,
                 warmup_epochs= 50,
                 dim_hidden = 128, 
                 num_layers_1 = 3,
@@ -69,4 +69,4 @@ if __name__=="__main__":
                      figsize=(8,8), 
                      xlim=(1e-5,1),
                      workdir=config.workdir,
-                     legend_loc='upper right')
+                     legend_loc='upper right')l

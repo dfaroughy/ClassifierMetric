@@ -30,7 +30,7 @@ config = Config(features    = ['eta_rel', 'phi_rel', 'pt_rel', 'e_rel',  'R'],
                 dim_hidden = 128, 
                 num_layers_1 = 3,
                 num_layers_2 = 3,
-                device = 'cuda:0'
+                device = 'cuda:1'
                 )
 
 if __name__=="__main__":

@@ -15,7 +15,7 @@ config = Config(features    = ['eta_rel', 'phi_rel', 'pt_rel', 'e_rel',  'R'],
                               'flow_euler' :    ['fm_tops150_cond_eu200nfe.h5', 'etaphipt'],
                               'diff_euler' :    ['diff_tops150_cond_euler_200_csts.h5', 'etaphipt_frac'],
                               'diff_em' :       ['diff_tops150_cond_em_200_csts.h5', 'etaphipt_frac'],
-                              'diff_ddim' :     ['diff_tops150_cond_ddim_200_csts.h5', 'etaphipt_frac'],
+                            #   'diff_ddim' :     ['diff_tops150_cond_ddim_200_csts.h5', 'etaphipt_frac'],
                               'jetnet150' :     ['t150.hdf5', 'particle_features']
                              },
                     labels  = {
@@ -24,7 +24,7 @@ config = Config(features    = ['eta_rel', 'phi_rel', 'pt_rel', 'e_rel',  'R'],
                               'flow_euler' : 2,
                               'diff_euler' : 3,
                               'diff_em' : 4,
-                              'diff_ddim' : 5,
+                            #   'diff_ddim' : 5,
                               'jetnet150' : -1 # test data
                               },
                 data_split_fracs = [0.6, 0.1, 0.3],
