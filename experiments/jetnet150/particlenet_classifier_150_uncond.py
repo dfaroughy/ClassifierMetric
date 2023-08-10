@@ -15,7 +15,8 @@ config = Config(features    = ['eta_rel', 'phi_rel', 'pt_rel', 'e_rel',  'R'],
                               'diff_midpoint' : ['diff_tops150_midpoint_100_csts.h5', 'etaphipt_frac'],
                               'flow_euler' :    ['fm_tops150_eu200nfe.h5', 'etaphipt'],
                               'diff_euler' :    ['diff_tops150_euler_200_csts.h5', 'etaphipt_frac'],
-                              'diff_ddim' :     ['diff_tops150_ddim_200_csts.h5', 'etaphipt_frac'],  
+                              'diff_em' :       ['diff_tops150_em_200_csts.h5', 'etaphipt_frac'],  
+                              'diff_ddim' :     ['diff_tops150_ddim_200_csts.h5', 'etaphipt_frac'],
                               'jetnet150' :     ['t150.hdf5', 'particle_features'],
                               },
                     labels  = {
@@ -23,20 +24,21 @@ config = Config(features    = ['eta_rel', 'phi_rel', 'pt_rel', 'e_rel',  'R'],
                               'diff_midpoint' : 1,
                               'flow_euler' : 2,
                               'diff_euler' : 3,
-                              'diff_ddim' : 4,
+                              'diff_em' : 4,
+                              'diff_ddim' : 5,
                               'jetnet150' : -1 # test data
                               },
                 data_split_fracs = [0.6, 0.1, 0.3],
                 epochs = 1000,
-                batch_size = 1024,
+                batch_size = 2048,
                 warmup_epochs= 50,
                 dim_hidden = 256, 
-                num_knn  = 16,
-                dim_conv_1 = 64,
+                num_knn  = 7,
+                dim_conv_1 = 32,
                 dim_conv_2 = 64,
-                num_layers_1 = 2,
-                num_layers_2 = 2,
-                device = 'cuda:3'
+                num_layers_1 = 3,
+                num_layers_2 = 3,
+                device = 'cuda:0'
                 )
 
 if __name__=="__main__":

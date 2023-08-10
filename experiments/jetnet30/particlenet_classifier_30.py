@@ -65,8 +65,9 @@ if __name__ == "__main__":
 
     plot_class_score(predictions=classifier.predictions,
                      class_labels=config.labels,
-                     reference='flow_midpoint',
+                     reference='flow_midpoint_cond',
                      title=config.model_name, 
                      figsize=(8,8), 
                      xlim=(1e-5,1),
-                     workdir=config.workdir)
+                     workdir=config.workdir,
+                     legend_loc='upper right')

@@ -3,10 +3,8 @@ from ClassifierMetric.datamodules.jetnet.datasets import JetNetDataset
 from ClassifierMetric.datamodules.jetnet.dataloaders import JetNetDataLoader
 from ClassifierMetric.utils.trainer import ModelClassifierTest
 
-# configs 
-
-from ClassifierMetric.models.particlenet import ParticleNet
-from ClassifierMetric.configs.particlenet_config import ParticleNetConfig as Config
+from ClassifierMetric.models.deepsets import DeepSets
+from ClassifierMetric.configs.deepsets_config import DeepSetsConfig as Config
 
 config = Config(features    = ['eta_rel', 'phi_rel', 'pt_rel', 'e_rel',  'R'],
                 preprocess  = ['standardize'],
@@ -26,25 +24,22 @@ config = Config(features    = ['eta_rel', 'phi_rel', 'pt_rel', 'e_rel',  'R'],
                               'diff_euler' : 3,
                               'diff_em' : 4,
                                'diff_ddim' : 5,
-                              'jetnet30' : -1, # test data
+                              'jetnet30' : -1 # test data
                               },
                 data_split_fracs = [0.6, 0.1, 0.3],
-                num_constituents=30,
                 epochs = 1000,
+                num_constituents=30,
                 batch_size = 2048,
                 warmup_epochs= 50,
-                dim_hidden = 256, 
-                num_knn  = 8,
-                dim_conv_1 = 32,
-                dim_conv_2 = 64,
+                dim_hidden = 128, 
                 num_layers_1 = 3,
                 num_layers_2 = 3,
-                device = 'cuda:0'
+                device = 'cuda:3'
                 )
 
-if __name__ == "__main__":
+if __name__=="__main__":
 
-    particlenet = ParticleNet(model_config=config)
+    deepset = DeepSets(model_config=config)
     config.save(path=config.workdir + '/configs.json')
     datasets = JetNetDataset(dir_path = '/home/df630/ClassifierMetric/data/', 
                             datasets = config.datasets,
@@ -56,7 +51,7 @@ if __name__ == "__main__":
                             remove_negative_pt = True
                             ) 
     dataloader = JetNetDataLoader(datasets=datasets, data_split_fracs=config.data_split_fracs, batch_size=config.batch_size)
-    classifier = ModelClassifierTest(classifier = particlenet, 
+    classifier = ModelClassifierTest(classifier = deepset, 
                                     dataloader = dataloader,
                                     epochs = config.epochs, 
                                     lr = config.lr, 

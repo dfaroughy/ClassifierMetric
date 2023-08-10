@@ -15,7 +15,7 @@ config = Config(features    = ['eta_rel', 'phi_rel', 'pt_rel', 'e_rel',  'R'],
                               'diff_midpoint' : ['diff_tops30_midpoint_100_csts.h5', 'etaphipt_frac'],
                               'flow_euler' :    ['fm_tops30_eu200nfe.h5', 'etaphipt'],
                               'diff_euler' :    ['diff_tops30_euler_200_csts.h5', 'etaphipt_frac'],
-                              'diff_ddim' :     ['diff_tops30_ddim_200_csts.h5', 'etaphipt_frac'] ,
+                              'diff_em' :     ['diff_tops30_em_200_csts.h5', 'etaphipt_frac'] ,
                               'jetnet30' :     ['t.hdf5', 'particle_features']
                               },
                     labels  = {
@@ -23,7 +23,7 @@ config = Config(features    = ['eta_rel', 'phi_rel', 'pt_rel', 'e_rel',  'R'],
                               'diff_midpoint' : 1,
                               'flow_euler' : 2,
                               'diff_euler' : 3,
-                              'diff_ddim' : 4,
+                              'diff_em' : 4,
                               'jetnet30' : -1, # test data
                               },
                 data_split_fracs = [0.6, 0.1, 0.3],
@@ -32,12 +32,12 @@ config = Config(features    = ['eta_rel', 'phi_rel', 'pt_rel', 'e_rel',  'R'],
                 batch_size = 1024,
                 warmup_epochs= 50,
                 dim_hidden = 256, 
-                num_knn  = 10,
-                dim_conv_1 = 64,
+                num_knn  = 7,
+                dim_conv_1 = 32,
                 dim_conv_2 = 64,
                 num_layers_1 = 3,
                 num_layers_2 = 3,
-                device = 'cuda:2'
+                device = 'cuda:1'
                 )
 
 if __name__ == "__main__":
@@ -71,5 +71,6 @@ if __name__ == "__main__":
                      title=config.model_name, 
                      figsize=(8,8), 
                      xlim=(1e-5,1),
-                     workdir=config.workdir)
+                     workdir=config.workdir,
+                     legend_loc='upper right')
     
