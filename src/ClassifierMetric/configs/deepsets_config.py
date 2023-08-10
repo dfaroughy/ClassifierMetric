@@ -9,8 +9,8 @@ class DeepSetsConfig(TrainConfig, DataConfig):
     model_name : str = 'DeepSets'
     dim_input  : int = 2 
     dim_output : int = 2
-    dim_hidden : int = 128   
-    num_layers_1 : int = 2
+    dim_hidden : int = 256   
+    num_layers_1 : int = 3
     num_layers_2 : int = 3
     mkdir : bool = True
 

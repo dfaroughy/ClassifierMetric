@@ -1,5 +1,7 @@
 import json
 import os
+from datetime import datetime
+
 from dataclasses import dataclass, asdict
 from ClassifierMetric.utils.utils import make_dir, print_table
 from ClassifierMetric.configs.base_configs import TrainConfig, DataConfig
@@ -19,12 +21,14 @@ class ParticleNetConfig(TrainConfig, DataConfig):
     dropout : float = 0.1
     mkdir : bool = True
 
-    def __post_init__(self):
+    def __post_init__(self, tag=None):
         super().__post_init__()
+        tag = '' if tag is None else f'.{tag}'
+        time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         self.dim_input = len(self.features) - 2  # subtract (eta, phi)
         self.dim_output = len(self.datasets) - 1
         if self.mkdir:
-            self.workdir = make_dir('/home/df630/ClassifierMetric/results/{}.{}'.format(self.data_name, self.model_name), overwrite=False)
+            self.workdir = make_dir('/home/df630/ClassifierMetric/results/{}.{}.{}{}_{}'.format(self.model_name, self.data_name, self.num_constituents, self.tag, time), overwrite=True)
 
     def save(self, path):
         config = asdict(self)
