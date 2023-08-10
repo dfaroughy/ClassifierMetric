@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 from dataclasses import dataclass, asdict
 from ClassifierMetric.utils.utils import make_dir, print_table
 from ClassifierMetric.configs.base_configs import TrainConfig, DataConfig
@@ -19,7 +20,8 @@ class DeepSetsConfig(TrainConfig, DataConfig):
         self.dim_input = len(self.features)
         self.dim_output = len(self.datasets) - 1
         if self.mkdir:
-            self.workdir = make_dir('/home/df630/ClassifierMetric/results/{}.{}'.format(self.data_name, self.model_name), overwrite=False)
+            time = datetime.now().strftime("%Y.%m.%d_%H:%M:%S")
+            self.workdir = make_dir('/home/df630/ClassifierMetric/results/{}.{}.{}_{}'.format(self.model_name, self.data_name, self.num_constituents, time), overwrite=True)
 
     def save(self, path):
         config = asdict(self)

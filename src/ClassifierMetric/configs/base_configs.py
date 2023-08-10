@@ -16,12 +16,7 @@ class DataConfig:
     def __post_init__(self):
         coords = ['eta_rel', 'phi_rel']
         self.features = [feature for feature in coords if feature not in self.features] + self.features
-        # testset = {'jetnet150': ['t150.hdf5', 'particle_features']}
-        # testlabel = {'jetnet150': -1}
-        # testset.update(self.datasets)
-        # testlabel.update(self.labels)
-        # self.datasets = testset
-        # self.labels = testlabel
+
     
 @dataclass
 class TrainConfig:
