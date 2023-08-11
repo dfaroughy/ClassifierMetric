@@ -18,7 +18,6 @@ class ParticleNetConfig(TrainConfig, DataConfig):
     num_layers_1 : int = 3
     num_layers_2 : int = 3
     dropout : float = 0.1
-    workdir = './'
     #################################
 
     def __post_init__(self):
