@@ -40,21 +40,23 @@ config = Config(features    = ['eta_rel', 'phi_rel', 'pt_rel', 'e_rel',  'R'],
                 device = 'cuda:0'
                 )
 
-if __name__ == "__main__":
+root_dir =  '/home/df630/ClassifierMetric' if 'cuda' in config.device else '/Users/dario/Dropbox/PROJECTS/ML/JetData/ClassifierMetric'
 
-    particlenet = ParticleNet(model_config=config)
-    config.save(path=config.workdir + '/configs.json')
-    datasets = JetNetDataset(dir_path = '/home/df630/ClassifierMetric/data/', 
+if __name__=="__main__":
+
+    model = ParticleNet(model_config=config)
+    config.set_workdir(root_dir + '/results', save_config=True)
+    datasets = JetNetDataset(dir_path = root_dir + '/data/', 
                             datasets = config.datasets,
                             class_labels = config.labels,
                             num_jets = config.max_num_jets,
-                            num_constituents = config.max_um_constituents,
+                            num_constituents = config.max_num_constituents,
                             preprocess = config.preprocess,
                             particle_features = config.features,
                             remove_negative_pt = True
                             ) 
     dataloader = JetNetDataLoader(datasets=datasets, data_split_fracs=config.data_split_fracs, batch_size=config.batch_size)
-    classifier = ModelClassifierTest(classifier = particlenet, 
+    classifier = ModelClassifierTest(classifier = model, 
                                     dataloader = dataloader,
                                     epochs = config.epochs, 
                                     lr = config.lr, 

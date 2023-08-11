@@ -30,14 +30,17 @@ config = Config(features    = ['eta_rel', 'phi_rel', 'pt_rel', 'e_rel',  'R'],
                 dim_hidden = 128, 
                 num_layers_1 = 3,
                 num_layers_2 = 3,
-                device = 'cuda:1'
+                device = 'cpu',
                 )
+
+root_dir =  '/home/df630/ClassifierMetric' if 'cuda' in config.device else '/Users/dario/Dropbox/PROJECTS/ML/JetData/ClassifierMetric'
 
 if __name__=="__main__":
 
-    deepset = DeepSets(model_config=config)
-    config.save(path=config.workdir + '/configs.json')
-    datasets = JetNetDataset(dir_path = '/home/df630/ClassifierMetric/data/', 
+
+    model = DeepSets(model_config=config)
+    config.set_workdir(root_dir + '/results', save_config=True)
+    datasets = JetNetDataset(dir_path = root_dir + '/data/', 
                             datasets = config.datasets,
                             class_labels = config.labels,
                             num_jets = config.max_num_jets,
@@ -47,7 +50,7 @@ if __name__=="__main__":
                             remove_negative_pt = True
                             ) 
     dataloader = JetNetDataLoader(datasets=datasets, data_split_fracs=config.data_split_fracs, batch_size=config.batch_size)
-    classifier = ModelClassifierTest(classifier = deepset, 
+    classifier = ModelClassifierTest(classifier = model, 
                                     dataloader = dataloader,
                                     epochs = config.epochs, 
                                     lr = config.lr, 
