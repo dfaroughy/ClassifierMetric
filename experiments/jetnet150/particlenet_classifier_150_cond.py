@@ -47,8 +47,8 @@ if __name__ == "__main__":
     datasets = JetNetDataset(dir_path = '/home/df630/ClassifierMetric/data/', 
                             datasets = config.datasets,
                             class_labels = config.labels,
-                            num_jets = config.num_jets,
-                            num_constituents = config.num_constituents,
+                            num_jets = config.max_num_jets,
+                            num_constituents = config.max_um_constituents,
                             preprocess = config.preprocess,
                             particle_features = config.features,
                             remove_negative_pt = True
