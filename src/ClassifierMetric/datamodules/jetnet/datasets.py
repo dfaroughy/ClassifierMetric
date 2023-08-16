@@ -59,7 +59,8 @@ class JetNetDataset(Dataset):
 
             with h5py.File(file_path, 'r') as f:
                 label = self.class_labels[data] if self.class_labels is not None else None
-                dataset = torch.from_numpy(f[key][...])
+                dataset = f[key][...]
+                dataset = torch.from_numpy(dataset).float()
                 dataset = self.apply_formatting(dataset)
                 self.summary_statistics[label] = self.summary_stats(dataset)
                 data_list.append(dataset)
@@ -70,6 +71,7 @@ class JetNetDataset(Dataset):
         label_tensor = torch.cat(label_list, dim=0) 
         self.summary_statistics['dataset'] = self.summary_stats(data_tensor)
         return data_tensor, label_tensor
+
 
     def apply_formatting(self, sample):
         sample = FormatData(sample,
