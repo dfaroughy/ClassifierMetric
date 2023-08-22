@@ -1,7 +1,7 @@
 from ClassifierMetric.utils.plots import plot_class_score
 from ClassifierMetric.datamodules.jetnet.datasets import JetNetDataset
 from ClassifierMetric.datamodules.jetnet.dataloaders import JetNetDataLoader
-from ClassifierMetric.utils.trainer import ModelClassifierTest
+from ClassifierMetric.train.trainer import ModelClassifierTest
 
 # configs 
 
