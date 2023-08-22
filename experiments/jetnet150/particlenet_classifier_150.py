@@ -11,30 +11,35 @@ from ClassifierMetric.configs.particlenet_config import ParticleNetConfig as Con
 config = Config(features    = ['eta_rel', 'phi_rel', 'pt_rel', 'e_rel',  'R'],
                 preprocess  = ['standardize'],
                 datasets    = {
-                              'flow_midpoint_cond' : ['fm_tops150_cond_mp200nfe.h5', 'etaphipt'],
-                              'diff_midpoint_cond' : ['diff_tops150_cond_midpoint_100_csts.h5', 'etaphipt_frac'],
-                              'flow_midpoint_uncond' : ['fm_tops150_mp200nfe.h5', 'etaphipt'],
-                              'diff_midpoint_uncond' : ['diff_tops150_midpoint_100_csts.h5', 'etaphipt_frac'],
-                              'jetnet150' :             ['t150.hdf5', 'particle_features']
+                              'flow_cond' :   ['fm_tops150_cond_mp200nfe.h5', 'etaphipt'],
+                              'diff_cond' :   ['diff_tops150_cond_midpoint_100_csts.h5', 'etaphipt_frac'],
+                              'flow_uncond' : ['fm_tops150_mp200nfe.h5', 'etaphipt'],
+                              'diff_uncond' : ['diff_tops150_midpoint_100_csts.h5', 'etaphipt_frac'],
+                              'gan_uncond' :  ['gan_tops150_csts.h5', 'etaphipt_frac'],
+                              'jetnet150' :   ['t150.hdf5', 'particle_features']
                               },
                     labels  = {
-                              'flow_midpoint_cond' : 0, 
-                              'diff_midpoint_cond' : 1,
-                              'flow_midpoint_uncond' : 2,
-                              'diff_midpoint_uncond' : 3,
-                              'jetnet150' : -1, # test data
+                              'flow_cond' : 0, 
+                              'diff_cond' : 1,
+                              'flow_uncond' : 2,
+                              'diff_uncond' : 3,
+                              'gan_uncond' : 4,
+                              'jetnet150' : -1    # test data
                               },
                 data_split_fracs = [0.6, 0.1, 0.3],
                 epochs = 1000,
-                batch_size = 1024,
-                warmup_epochs= 50,
+                batch_size = 2048,
+                lr = 0.001,
+                early_stopping = 30,
+                warmup_epochs=100,
                 dim_hidden = 256, 
-                num_knn  = 7,
+                num_knn  = 8,
                 dim_conv_1 = 32,
                 dim_conv_2 = 64,
                 num_layers_1 = 3,
                 num_layers_2 = 3,
-                device = 'cuda:3'
+                dropout = 0.2,
+                device = 'cuda:0'
                 )
 
 root_dir =  '/home/df630/ClassifierMetric' if 'cuda' in config.device else '/Users/dario/Dropbox/PROJECTS/ML/JetData/ClassifierMetric'
@@ -66,9 +71,8 @@ if __name__=="__main__":
 
     plot_class_score(predictions=classifier.predictions,
                      class_labels=config.labels,
-                     reference='flow_midpoint_cond',
+                     reference='flow_cond',
                      title=config.model_name, 
                      figsize=(8,8), 
                      xlim=(1e-5,1),
-                     workdir=config.workdir,
-                     legend_loc='upper right')
+                     workdir=config.workdir)
