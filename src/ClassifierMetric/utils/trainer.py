@@ -79,7 +79,8 @@ class ModelClassifierTest:
 
         for _, label in class_labels.items():
             self.predictions[label] = self.predictions['datasets'][labels == label][:, :-1]
-            if label != -1: self.log_posterior[label] = torch.log(self.predictions[label]).mean(dim=0)
+            self.log_posterior[label] = torch.log(self.predictions[label][self.predictions[label]>0]).mean()
+
 
 class Train_Step(nn.Module):
 
@@ -108,6 +109,8 @@ class Train_Step(nn.Module):
             print("\t Training loss: {}".format(self.loss))
 
         self.losses.append(self.loss) 
+
+
 class Validation_Step(nn.Module):
 
     def __init__(self, loss_fn, warmup_epochs=10):
