@@ -29,10 +29,13 @@ def plot_class_score(predictions: dict=None,
                      ylog=True,
                      density=False, 
                      xlim=(0,1),
-                    legend_loc='upper left'):
+                    legend_loc='upper left',
+                    legend_fontsize=10,
+                    legend=None):
 
     ref_label = class_labels[reference]
     get_name = {v: k for k, v in class_labels.items()}
+    print(get_name)
     fig, ax = plt.subplots(1, figsize=figsize)    
     N = int(1e10) if density else predictions[-1].shape[0]
     for label, score in predictions.items():
@@ -47,9 +50,10 @@ def plot_class_score(predictions: dict=None,
                      alpha=alpha if test else 1, 
                      ax=ax, 
                      stat='density' if density else 'count',
-                     label=get_name[label]) 
-    plt.xlabel(r'score')
+                     label=get_name[label] if legend is None else legend[label]) 
+    plt.xlabel(r'multi-classifier score')
     plt.xlim(xlim)
-    plt.title('{}'.format(title), fontsize=12)
-    plt.legend(loc=legend_loc, fontsize=10)
+    if title is not None:
+        plt.title('{}'.format(title), fontsize=12)
+    plt.legend(loc=legend_loc, fontsize=legend_fontsize)
     plt.savefig(workdir+'/classifier_score.png')
