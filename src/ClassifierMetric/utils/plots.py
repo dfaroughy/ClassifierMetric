@@ -35,7 +35,6 @@ def plot_class_score(predictions: dict=None,
 
     ref_label = class_labels[reference]
     get_name = {v: k for k, v in class_labels.items()}
-    print(get_name)
     fig, ax = plt.subplots(1, figsize=figsize)    
     N = int(1e10) if density else predictions[-1].shape[0]
     for label, score in predictions.items():
