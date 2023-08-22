@@ -14,16 +14,16 @@ class JetNetDataset(Dataset):
                  class_labels: dict=None,
                  particle_features: list=['eta_rel', 'phi_rel', 'pt_rel'],
                  preprocess : list=None,
-                 num_jets: int=None,
-                 num_constituents: int=150,
+                 max_num_jets: int=None,
+                 max_num_constituents: int=150,
                  remove_negative_pt: bool=False,
                  compute_jet_features: bool=False):
         
         self.path = dir_path
         self.datasets = datasets
         self.class_labels = class_labels
-        self.num_jets = num_jets
-        self.num_consts = num_constituents
+        self.max_num_jets = max_num_jets
+        self.max_num_consts = max_num_constituents
         self.particle_features = particle_features
         self.remove_negative_pt = remove_negative_pt
         self.compute_jet_features = compute_jet_features
@@ -75,8 +75,8 @@ class JetNetDataset(Dataset):
 
     def apply_formatting(self, sample):
         sample = FormatData(sample,
-                            num_jets=self.num_jets,
-                            num_constituents=self.num_consts,
+                            max_num_jets=self.max_num_jets,
+                            max_num_constituents=self.max_num_consts,
                             particle_features=self.particle_features,
                             remove_negative_pt=self.remove_negative_pt)
         sample.format()
@@ -109,8 +109,8 @@ class JetNetDataset(Dataset):
                      'class_labels': self.class_labels, 
                      'particle_features': self.particle_features,
                      'preprocess': self.preprocess, 
-                     'num_jets': self.num_jets, 
-                     'num_constituents': self.num_consts, 
+                     'max_num_jets': self.max_num_jets, 
+                     'max_num_constituents': self.max_num_consts, 
                      'remove_negative_pt': self.remove_negative_pt}
         
         with open(path+'/dataset_configs.json', 'w') as json_file:

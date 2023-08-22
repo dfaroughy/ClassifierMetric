@@ -31,6 +31,7 @@ class ParticleNet(nn.Module):
         return self.particle_net.forward(points, features, mask)
     
     def loss(self, batch): 
+        # transpose is necessary for the ParticleNet input which is of the form: (N, D, P) 
         points = batch['particle_features'][..., 0:2].transpose(1, 2).to(self.device)
         features = batch['particle_features'][..., 2:].transpose(1, 2).to(self.device)
         mask = batch['mask'].unsqueeze(-1).transpose(1, 2).to(self.device)
