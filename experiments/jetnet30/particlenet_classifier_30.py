@@ -30,16 +30,16 @@ config = Config(features    = ['eta_rel', 'phi_rel', 'pt_rel', 'e_rel',  'R'],
                               },
                 data_split_fracs = [0.6, 0.1, 0.3],
                 max_num_constituents=30,
-                epochs = 1000,
+                epochs = 5000,
                 batch_size = 2048,
-                warmup_epochs= 120,
+                warmup_epochs= 5000,
                 dim_hidden = 256, 
                 num_knn  = 8,
                 dim_conv_1 = 32,
                 dim_conv_2 = 64,
                 num_layers_1 = 3,
                 num_layers_2 = 3,
-                device = 'cuda:0'
+                device = 'cuda:3'
                 )
 
 root_dir =  '/home/df630/' if 'cuda' in config.device else '/Users/dario/Dropbox/PROJECTS/ML/JetData/'
@@ -52,8 +52,8 @@ if __name__=="__main__":
     datasets = JetNetDataset(dir_path = root_dir + '/data/', 
                             datasets = config.datasets,
                             class_labels = config.labels,
-                            num_jets = config.max_num_jets,
-                            num_constituents = config.max_num_constituents,
+                            max_num_jets = config.max_num_jets,
+                            max_num_constituents = config.max_num_constituents,
                             preprocess = config.preprocess,
                             particle_features = config.features,
                             remove_negative_pt = True

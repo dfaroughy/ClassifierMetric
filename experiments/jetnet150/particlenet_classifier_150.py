@@ -27,10 +27,10 @@ config = Config(features    = ['eta_rel', 'phi_rel', 'pt_rel', 'e_rel',  'R'],
                               'jetnet150' : -1    # test data
                               },
                 data_split_fracs = [0.6, 0.1, 0.3],
-                epochs = 1000,
+                epochs = 5000,
                 batch_size = 2048,
                 lr = 0.001,
-                early_stopping = 30,
+                early_stopping = 5000,
                 warmup_epochs=100,
                 dim_hidden = 256, 
                 num_knn  = 8,
@@ -38,8 +38,8 @@ config = Config(features    = ['eta_rel', 'phi_rel', 'pt_rel', 'e_rel',  'R'],
                 dim_conv_2 = 64,
                 num_layers_1 = 3,
                 num_layers_2 = 3,
-                dropout = 0.2,
-                device = 'cuda:0'
+                dropout = 0.1,
+                device = 'cuda:1'
                 )
 
 root_dir =  '/home/df630/ClassifierMetric' if 'cuda' in config.device else '/Users/dario/Dropbox/PROJECTS/ML/JetData/ClassifierMetric'
@@ -51,8 +51,8 @@ if __name__=="__main__":
     datasets = JetNetDataset(dir_path = root_dir + '/data/', 
                             datasets = config.datasets,
                             class_labels = config.labels,
-                            num_jets = config.max_num_jets,
-                            num_constituents = config.max_num_constituents,
+                            max_num_jets = config.max_num_jets,
+                            max_num_constituents = config.max_num_constituents,
                             preprocess = config.preprocess,
                             particle_features = config.features,
                             remove_negative_pt = True
