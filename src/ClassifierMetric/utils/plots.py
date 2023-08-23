@@ -23,12 +23,15 @@ def plot_class_score(predictions: dict=None,
                      reference: str=None,
                      figsize=(4,4), 
                      bins=np.arange(-0.03, 1.03, 0.01), 
-                     lw=0.75,
-                     alpha=0.2,
+                     density=False, 
+                     xlabel=r'score',
+                     ylabel=r'Normalised Entries',
                      xlog=False, 
                      ylog=True,
-                     density=False, 
                      xlim=(0,1),
+                     lw=0.75,
+                     color=None,
+                     alpha=0.2,
                     legend_loc='upper left',
                     legend_fontsize=10,
                     legend=None):
@@ -45,14 +48,17 @@ def plot_class_score(predictions: dict=None,
                      element="step", 
                      log_scale=(xlog, ylog), 
                      lw = 0 if test else lw, 
+                     ls = '--' if '(uncond)' in legend[label] else '-',
                      fill=test, 
+                     color = color[label],
                      alpha=alpha if test else 1, 
                      ax=ax, 
                      stat='density' if density else 'count',
                      label=get_name[label] if legend is None else legend[label]) 
-    plt.xlabel(r'multi-classifier score')
+    plt.xlabel(xlabel)
+    plt.ylabel(r'Normalised Entries')
     plt.xlim(xlim)
     if title is not None:
         plt.title('{}'.format(title), fontsize=12)
-    plt.legend(loc=legend_loc, fontsize=legend_fontsize)
-    plt.savefig(workdir+'/classifier_score.png')
+    plt.legend(loc=legend_loc, fontsize=legend_fontsize, frameon=False)
+    plt.savefig(workdir+'/classifier_score.pdf', bbox_inches='tight', dpi=300)
