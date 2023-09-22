@@ -44,7 +44,7 @@ class PreprocessData:
         self.particle_features -= jet_coords 
 
     def standardize(self,  sigma: float=1.0):
-        self.particle_features = (self.particle_features * self.mean) * (sigma / self.std )
+        self.particle_features = (self.particle_features - self.mean) * (sigma / self.std )
         self.particle_features *= self.mask
 
     def normalize(self):
