@@ -13,17 +13,15 @@ config = Config(features    = ['eta_rel', 'phi_rel', 'pt_rel', 'e_rel',  'R'],
                 datasets    = {
                               'flow_cond' :   ['fm_tops150_cond_mp200nfe.h5', 'etaphipt'],
                               'diff_cond' :   ['diff_tops150_cond_midpoint_100_csts.h5', 'etaphipt_frac'],
-                              'flow_uncond' : ['fm_tops150_mp200nfe.h5', 'etaphipt'],
-                              'diff_uncond' : ['diff_tops150_midpoint_100_csts.h5', 'etaphipt_frac'],
+                            #   'diff_uncond' : ['diff_tops150_midpoint_100_csts.h5', 'etaphipt_frac'],
                               'gan_uncond' :  ['gan_tops150_csts.h5', 'etaphipt_frac'],
                               'jetnet150' :   ['t150.hdf5', 'particle_features']
                               },
                     labels  = {
                               'flow_cond' : 0, 
                               'diff_cond' : 1,
-                              'flow_uncond' : 2,
-                              'diff_uncond' : 3,
-                              'gan_uncond' : 4,
+                            #   'diff_uncond' : 2,
+                              'gan_uncond' : 2,
                               'jetnet150' : -1    # test data
                               },
                 data_split_fracs = [0.6, 0.1, 0.3],
@@ -39,7 +37,7 @@ config = Config(features    = ['eta_rel', 'phi_rel', 'pt_rel', 'e_rel',  'R'],
                 num_layers_1 = 3,
                 num_layers_2 = 3,
                 dropout = 0.1,
-                device = 'cuda:2'
+                device = 'cuda:0'
                 )
 
 root_dir =  '/home/df630/ClassifierMetric' if 'cuda' in config.device else '/Users/dario/Dropbox/PROJECTS/ML/JetData/ClassifierMetric'
