@@ -27,7 +27,7 @@ config = Config(features    = ['eta_rel', 'phi_rel', 'pt_rel', 'e_rel',  'R'],
                               'jetnet150' : -1    # test data
                               },
                 data_split_fracs = [0.6, 0.1, 0.3],
-                epochs = 5000,
+                epochs = 1000,
                 batch_size = 2048,
                 lr = 0.001,
                 early_stopping = 5000,
@@ -39,7 +39,7 @@ config = Config(features    = ['eta_rel', 'phi_rel', 'pt_rel', 'e_rel',  'R'],
                 num_layers_1 = 3,
                 num_layers_2 = 3,
                 dropout = 0.1,
-                device = 'cuda:2'
+                device = 'cuda:1'
                 )
 
 root_dir =  '/home/df630/ClassifierMetric' if 'cuda' in config.device else '/Users/dario/Dropbox/PROJECTS/ML/JetData/ClassifierMetric'
